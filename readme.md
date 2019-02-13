@@ -1,43 +1,54 @@
 # AndroidFTP-DataBackup
 
-AndroidFTP-DataBackup is used to backup up files from android phone to Laptop/ PC using a FTP Server hosted on the phone.
+**AndroidFTP-DataBackup** is used to backup up files from android phone to Laptop/ PC using a FTP Server hosted on the phone.
 
 ## Downloads required:
-```
-Python3: https://www.python.org/downloads/
-pywin32: https://pypi.org/project/pywin32/
-Download WiFi FTP Server from Playstore to create a FTP Server on mobile phone.
-```
+- [Python3](https://www.python.org/downloads/)
+- [pywin32](https://pypi.org/project/pywin32/)
+- Download **WiFi FTP Server** from Playstore to create a FTP Server on mobile phone.
 
 ## Configuration
-Make sure to update the configuration file before running the code.
+**Make sure to update the configuration file before running the code.**
+
+ - FTP Connection Details. Replace `192.168.0.100` with the IP of your FTP Server and `2221`
+ with the port set for the server.
 ```
-# FTP Details
 IP: str = '192.168.0.100'
 PORT: int = 2221
+```
 
-# FTP Credentials
+- FTP Credentials. Insert your username and password set on the FTP server in place of
+`USERNAME` and `PASSWORD`.
+```
 USERNAME: str = 'USERNAME'
 PASSWORD: str = 'PASSWORD'
+```
 
-# Base folder for storing backups
+- Base folder for storing backups. All the files will be stored with reference to this folder.
+Make sure you have sufficient space to save your data. Replace `C:/Backup/` with the path
+you want to store your data. Path should end with `/`.
+```
 DESTINATION_FOLDER: str = 'C:/Backup/'
+```
 
-# File separator
-CON: str = '/'
-
-# File to save last update timestamp.
-# Should be a valid filename.
-# Separator should be "/"
+- File to save last update timestamp, this is used for updating from last backup state.
+Should be a valid filename. Separator should be `/`. Replace `C:/update_date.txt` with any name
+of your choice.
+```
 UPDATE_DATE_TXT: str = 'C:/update_date.txt'
+```
 
-
-# List of Folders to backup
-# Format: List[str]
-# [<source folder path>, <destination folder path>, <Any String, Refer below comment for uses>]
-#    3 Elements in list => Save backup to the folder mentioned
-#    2 Elements in list => Save backup to the folder mentioned, create folders for Year/Month and save accordingly
-# * Source path should not contain sdcard path, sdcard acts like the base folder by default.
+- List of Folders to backup
+    - Format: List[str]
+    ```
+     [<source folder path>, <destination folder path>, <Empty String, Refer below comment for uses>]
+    ```
+    - 3 Elements in list -> Save backup to the folder mentioned
+    - 2 Elements in list -> Save backup to the folder mentioned, 
+    create folders for Year/Month and save accordingly
+    - Source path should not contain sdcard path, sdcard acts like the base folder by default.
+    - Add paths you want to backup in similar way as given below.
+```
 FOLDERS: List[List[str]] = [
     ['WhatsApp/Media/WhatsApp Images', DESTINATION_FOLDER + 'Whatsapp/WhatsApp Images'],
     ['WhatsApp/Media/WhatsApp Video', DESTINATION_FOLDER + 'Whatsapp/WhatsApp Video'],
@@ -46,15 +57,24 @@ FOLDERS: List[List[str]] = [
     ['DCIM/Camera', DESTINATION_FOLDER + 'Camera'],
     ['Pictures/Screenshots', DESTINATION_FOLDER + 'Pictures/Screenshots', ''],
 ]
+```
 
-# Source path for WhatsApp DB
+- Source path for WhatsApp DB. This will be the default path for WhatsApp Databases, change 
+only if you are sure that you have some other path.
+```
 MSGSTORE_DB_CRYPT_: str = 'WhatsApp/Databases/msgstore.db.crypt12'
+```
 
-# Destination  for WhatsApp DB
+- Destination for WhatsApp DB. This will be the path to store the database backup, 
+Replace `msgstore.db.crypt12` in case you want to store with some other name.
+```
 MSGSTORE_DB_CRYPT_DEST_: str = DESTINATION_FOLDER + 'Whatsapp/msgstore.db.crypt12'
+```
 
-# Format for month names.
-# Folders will be created using values in this Dict
+- Format for month names, folders will be created using values in this Dictionary if set in 
+config. You can change `01-Jan` of `'1': '01-Jan',` if you need any other folder name for
+that month, do not change `1` of any other key in dictionary.
+```
 MONTHS: Dict[str, str] = {
     '1': '01-Jan',
     '2': '02-Feb',
@@ -71,8 +91,9 @@ MONTHS: Dict[str, str] = {
 }
 ```
 
-## Backup
+## How to take a Backup
+
+- Run AndroidFTP-DataBackup
 ```
-Run ftpbackup.py
 $ python3 ftpbackup.py
 ```
