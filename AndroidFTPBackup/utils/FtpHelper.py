@@ -2,13 +2,13 @@ import ftplib
 import logging
 
 from AndroidFTPBackup import views
-from AndroidFTPBackup.constants.PyStrings import LOG_INIT
+import AndroidFTPBackup.constants.PyStrings as pS
 
 
 class FtpHelper:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(LOG_INIT.format(__name__))
+        self.logger.info(pS.LOG_INIT.format(__name__))
         self.ftp_connected = False
 
     def test_wifi_connection(self, ip, port, user, pass_):
@@ -47,6 +47,6 @@ class FtpHelper:
 
     def get_ftp_connection(self):
         ftp = ftplib.FTP()
-        ftp.connect(views.handler.config[FTP][FTP_IP], int(views.handler.config[FTP][PORT]))
-        ftp.login(user=views.handler.config[FTP][USERNAME], passwd=views.handler.config[FTP][PASSWORD])
+        ftp.connect(views.handler.config[pS.FTP][pS.FTP_IP], int(views.handler.config[pS.FTP][pS.PORT]))
+        ftp.login(user=views.handler.config[pS.FTP][pS.USERNAME], passwd=views.handler.config[pS.FTP][pS.PASSWORD])
         return ftp

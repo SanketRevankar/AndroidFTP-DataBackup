@@ -9,10 +9,10 @@ class Handler:
         self.logger = logging.getLogger(__name__)
         self.logger.info('{} - Initiated'.format(__name__))
         self.latest_backup = None
-        try:
-            self.latest_backup = LastBackup.objects.get(id=1)
-        except LastBackup.DoesNotExist:
-            pass
+        # try:
+        #     self.latest_backup = LastBackup.objects.get(id=1)
+        # except LastBackup.DoesNotExist:
+        #     pass
         self.context = {
             'latest_backup': self.latest_backup,
         }
