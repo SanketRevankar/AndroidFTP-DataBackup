@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Android FTP Backup | New Backup</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    {% load static %}
+    <link href="{% static "css/style.css" %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css?family=Salsa&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+<header>
+    <nav class="navbar sticky-top navbar-expand-lg bg-dark navbar-dark fixed-top">
+        <span class="navbar-brand mb-0 h2 mr-auto">Android FTP Backup</span>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Backup</a>
+                </li>
+                <li class="nav-item">
+                    <!--suppress HtmlUnknownTarget -->
+                    <a class="nav-link" href="dashboard">Dashboard</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+<div class="div-container">
+    <form id="user-config" onsubmit="return validate()">
+        <h2 class="bg-dark">Create a new Backup</h2>
+
+        <div class="form-group">
+            <label for="backup-location" id="label-backup-location">Backup Location</label>
+            <input type="text" class="form-control" aria-roledescription="backup-help" id="backup-location" placeholder="Enter Backup Location">
+            <small id="backup-help" class="form-text text-muted">Reconfirm the Location to avoid errors.</small>
+            <div class="invalid-feedback">
+                Please give a backup location. (PS. Cannot save in Drive directly, enter a folder name)
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="nmap-range" id="label-nmap-range" class="text-success">Local IP range for Nmap Scan</label>
+            <input type="text" class="form-control is-valid" aria-roledescription="nmap-help" id="nmap-range" placeholder="Enter IP Range" value="{{ hosts }}">
+            <small id="nmap-help" class="form-text text-muted">Use CIDR Notation, given IP range is default for most cases.</small>
+            <div class="invalid-feedback">
+                Please enter a valid IP range.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="wifi-connections" id="label-wifi-connections">Select your Device</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">
+                        <a href="#" class="fas fa-sync-alt fast-spin fa-cool" id='refresh-wifi-connections' title="Refresh Connections"></a>
+                    </span>
+                </div>
+                <select class="form-control custom-select" id="wifi-connections" aria-roledescription="wifi-help" >
+                    <option selected>Loading...</option>
+                </select>
+            </div>
+            <small id="wifi-help" class="form-text text-muted">Using Nmap to scan on <a id="nmap-ip">{{ hosts }}</a></small>
+            <div class="invalid-feedback">
+                Please Choose your device.
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-3">
+                <label for="ftp-ip" id="label-ftp-ip">FTP IP</label>
+                <input type="text" class="form-control" aria-roledescription="ftp-ip-help" id="ftp-ip" placeholder="Select your device for IP" readonly>
+                <small id="ftp-ip-help" class="form-text text-muted">IP of your Device.</small>
+                <div class="invalid-feedback">
+                    Please select device from above.
+                </div>
+            </div>
+
+            <div class="form-group col-md-3">
+                <label for="ftp-user" id="label-ftp-user">FTP Username</label>
+                <input type="text" class="form-control" aria-roledescription="ftp-user-help" id="ftp-user" placeholder="Enter FTP Username" value="Sanket">
+                <small id="ftp-user-help" class="form-text text-muted">Enter FTP Username.</small>
+                <div class="invalid-feedback">
+                    Please enter correct username.
+                </div>
+            </div>
+
+            <div class="form-group col-md-3">
+                <label for="ftp-pass" id="label-ftp-pass">FTP Password</label>
+                <input class="form-control" id="ftp-pass-hidden" hidden>
+                <div class="input-group">
+                    <input type="password" class="form-control" aria-roledescription="ftp-pass-help" id="ftp-pass" placeholder="Enter FTP Password" value="sanketsr">
+                    <div class="input-group-append">
+                        <span class="input-group-text">
+                            <a class="fas fa-eye-slash fa-cool" href='#' id="eye-style"></a>
+                        </span>
+                    </div>
+                </div>
+                <small id="ftp-pass-help" class="form-text text-muted">Enter FTP Password.</small>
+                <div class="invalid-feedback">
+                    Please enter correct password.
+                </div>
+            </div>
+
+            <div class="form-group col-md-1">
+                <label for="ftp-port" id="label-ftp-port" class="text-success">FTP Port</label>
+                <input type="text" class="form-control is-valid" aria-roledescription="ftp-port-help" id="ftp-port" placeholder="FTP Port" value="2221">
+                <small id="ftp-port-help" class="form-text text-muted">Enter FTP Port.</small>
+                <div class="invalid-feedback">
+                    Please enter correct port.
+                </div>
+            </div>
+
+            <div class="form-group col-md-2">
+                <label for="ftp-test" id="label-ftp-test">FTP Test</label>
+                <input class="form-control" id="ftp-test-hidden" hidden>
+                <button type="button" class="btn btn-success w-100" id="ftp-test" aria-roledescription="ftp-test-help" style="cursor: pointer;">FTP Test</button>
+                <small id="ftp-test-help" class="form-text text-muted">Click to test connection.</small>
+                <div class="invalid-feedback">
+                    Please test before submitting.
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="file-list-div" id="label-file-list-div" aria-roledescription="ftp-dir-help">Folders to Backup</label>
+            <input class="form-control" id="ftp-list-hidden" hidden>
+            <small id="ftp-dir-help" class="form-text text-muted">Will be loaded on successful test.</small>
+            <div class="invalid-feedback">
+                Please select atleast one folder to backup.
+            </div>
+        </div>
+        <div class="form-group form-check" id="file-list-div">
+        </div>
+
+        <button type="submit" class="btn btn-dark w-100">Submit</button>
+    </form>
+
+    <!-- Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="modalScrollableTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalScrollableTitle">Confirm Backup Settings</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="confirmationModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="confirmationModalSave">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark fixed-bottom justify-content-center">
+        <div class="navbar-nav w-100 ai-b">
+            <a href="https://www.facebook.com/sanket.revankar1" target="_blank"
+               class="fab fa-facebook-f footer-link"></a>
+            <a href="https://github.com/SanketRevankar" target="_blank" class="fab fa-github footer-link"></a>
+            <a href="https://www.linkedin.com/in/sanketrevankar/" target="_blank"
+               class="fab fa-linkedin-in footer-link"></a>
+            <p class="navbar-nav nav-item ml-auto footer-link">
+                {% if latest_backup %}
+                    {{ latest_backup }}
+                {% else %}
+                    No backup available.
+                {% endif %}
+            </p>
+        </div>
+    </nav>
+</footer>
+
+</body>
+</html>
+<script src="{% static "js/http_code.jquery.com_jquery-3.4.1.js" %}"></script>
+<script src="{% static "js/http_stackpath.bootstrapcdn.com_bootstrap_4.3.1_js_bootstrap.js" %}"></script>
+<script src="{% static "js/new_backup.js" %}"></script>
