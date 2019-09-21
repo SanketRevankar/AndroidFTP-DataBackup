@@ -1,6 +1,8 @@
 # AndroidFTP-DataBackup
 
-**AndroidFTP-DataBackup** is used to backup up files from android phone to Laptop/ PC using a FTP Server hosted on the phone.
+**AndroidFTP-DataBackup** is used to backup up files from android phone to Laptop/ PC using a FTP Server hosted on the phone. 
+
+[Click for Django Version](https://github.com/SanketRevankar/AndroidFTP-DataBackup/tree/ftp-backup-django)
 
 ## Downloads required:
 - [Python3](https://www.python.org/downloads/)
