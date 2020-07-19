@@ -2,17 +2,19 @@ import logging
 import os
 import platform
 
-from AndroidFTPBackup import views
 from AndroidFTPBackup.constants import PyStrings as pS
+from AndroidFTP_Backup import handler
 
 
 class FileHelper:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.logger.info(pS.LOG_INIT.format(__name__))
+
         self.dirs = {}
         self.data_list_space = {pS.TYPE: pS.SIZE}
         self.data_list_count = {pS.TYPE: pS.COUNT}
+        self.initiate_file_system()
 
     def set_sizes(self, folder):
         self.dirs[folder][pS.TOTAL_SIZE] = sum(self.dirs[folder][pS.SIZES]) \
@@ -30,7 +32,7 @@ class FileHelper:
         self.logger.info(pS.SYSTEM_DATA_COLLECTION)
         data = {}
 
-        for a, b, c in os.walk(views.handler.config[pS.PATH][pS.BACKUP_FOLDER]):
+        for a, b, c in os.walk(handler.config[pS.PATH][pS.BACKUP_FOLDER]):
             replace_a = a.replace('\\', '/')
             self.dirs[replace_a] = {pS.FOLDERS: [x for x in b if x[0] != '$'], pS.FILES: c}
 
@@ -67,7 +69,7 @@ class FileHelper:
 
             self.dirs[replace_a][pS.SIZES] = sizes
 
-        self.set_sizes(views.handler.config[pS.PATH][pS.BACKUP_FOLDER])
+        self.set_sizes(handler.config[pS.PATH][pS.BACKUP_FOLDER])
 
         for t in data:
             self.data_list_space[t] = round(data[t][pS.SIZE] / 1024 / 1024 / 1024, 3)
@@ -87,7 +89,7 @@ class FileHelper:
 
     def open_(self, path):
         self.logger.info(pS.OPEN_DIR.format(path))
-        path = self.folder_join(views.handler.config[pS.PATH][pS.BACKUP_FOLDER], path)
+        path = self.folder_join(handler.config[pS.PATH][pS.BACKUP_FOLDER], path)
         if platform.system() == pS.WINDOWS:
             os.startfile(path)
         elif platform.system() == pS.DARWIN:
@@ -109,4 +111,4 @@ class FileHelper:
 
     def folder_list(self):
         self.logger.info(pS.FETCHING_FOLDER_LIST)
-        return eval(views.handler.config[pS.PATH][pS.FOLDERS])
+        return eval(handler.config[pS.PATH][pS.FOLDERS])

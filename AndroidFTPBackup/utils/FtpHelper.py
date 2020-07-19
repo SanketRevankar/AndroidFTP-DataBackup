@@ -1,8 +1,8 @@
 import ftplib
 import logging
 
-from AndroidFTPBackup import views
 import AndroidFTPBackup.constants.PyStrings as pS
+from AndroidFTP_Backup import handler
 
 
 class FtpHelper:
@@ -47,6 +47,6 @@ class FtpHelper:
 
     def get_ftp_connection(self):
         ftp = ftplib.FTP()
-        ftp.connect(views.handler.config[pS.FTP][pS.FTP_IP], int(views.handler.config[pS.FTP][pS.PORT]))
-        ftp.login(user=views.handler.config[pS.FTP][pS.USERNAME], passwd=views.handler.config[pS.FTP][pS.PASSWORD])
+        ftp.connect(handler.config[pS.FTP][pS.FTP_IP], int(handler.config[pS.FTP][pS.PORT]))
+        ftp.login(user=handler.config[pS.FTP][pS.USERNAME], passwd=handler.config[pS.FTP][pS.PASSWORD])
         return ftp

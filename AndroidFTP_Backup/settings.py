@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'AndroidFTPBackup.apps.AndroidftpbackupConfig',
+    'AndroidFTP_Backup.apps.MyAppConfig',
     'channels'
 ]
 
