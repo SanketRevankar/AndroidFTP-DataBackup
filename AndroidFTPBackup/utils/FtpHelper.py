@@ -45,8 +45,11 @@ class FtpHelper:
 
         return dir_list
 
-    def get_ftp_connection(self):
+    @staticmethod
+    def get_ftp_connection():
+        config = handler.configHelper.get_config()
+
         ftp = ftplib.FTP()
-        ftp.connect(handler.config[pS.FTP][pS.FTP_IP], int(handler.config[pS.FTP][pS.PORT]))
-        ftp.login(user=handler.config[pS.FTP][pS.USERNAME], passwd=handler.config[pS.FTP][pS.PASSWORD])
+        ftp.connect(config[pS.FTP][pS.FTP_IP], int(config[pS.FTP][pS.PORT]))
+        ftp.login(user=config[pS.FTP][pS.USERNAME], passwd=config[pS.FTP][pS.PASSWORD])
         return ftp

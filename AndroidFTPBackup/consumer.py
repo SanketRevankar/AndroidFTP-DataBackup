@@ -27,7 +27,4 @@ class AndroidFTPBackupConsumer(AsyncWebsocketConsumer):
         )
 
     async def AndroidFTPBackup_message(self, event):
-        message = event['message']
-
-        # Send message to WebSocket
-        await self.send(json.dumps({'message': message}))
+        await self.send(json.dumps(event))

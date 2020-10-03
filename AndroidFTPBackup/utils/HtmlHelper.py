@@ -21,12 +21,13 @@ class HtmlHelper:
     @staticmethod
     def open_dir(request):
         response = Hs.HEADER_
+        config = handler.configHelper.get_config()
 
         next_ = request.GET.get(pS.QUERY)
         if next_ != '':
             response += Hs.CURRENT_DIR + '/'.join(str(next_).split('/')[:-1]) + Hs.END_A
 
-        path = handler.config[pS.PATH][pS.BACKUP_FOLDER] + next_.strip('/')
+        path = config[pS.PATH][pS.BACKUP_FOLDER] + next_.strip('/')
         n = 0
 
         total_size, size = handler.fileHelper.get_readable_size(
@@ -63,8 +64,10 @@ class HtmlHelper:
 
     @staticmethod
     def get_total_size(_):
+        config = handler.configHelper.get_config()
+
         total_size, size = handler.fileHelper.get_readable_size(
-            handler.fileHelper.dirs[handler.config[pS.PATH][pS.BACKUP_FOLDER]][pS.TOTAL_SIZE])
+            handler.fileHelper.dirs[config[pS.PATH][pS.BACKUP_FOLDER]][pS.TOTAL_SIZE])
         return HttpResponse(str(total_size) + " " + size)
 
     @staticmethod
@@ -111,15 +114,20 @@ class HtmlHelper:
 
     @staticmethod
     def save_config(request):
-        config = handler.config
-        config[pS.PATH][pS.BACKUP_FOLDER] = request.GET.get(pS.CONF_BACKUP_LOCATION)
-        handler.fileHelper.check_create_backup_folder(config[pS.PATH][pS.BACKUP_FOLDER])
-        config[pS.NMAP][pS.HOSTS] = request.GET.get(pS.CONF_NMAP_RANGE)
-        config[pS.FTP][pS.FTP_IP] = request.GET.get(pS.CONF_FTP_IP)
-        config[pS.FTP][pS.USERNAME] = request.GET.get(pS.CONF_FTP_USER)
-        config[pS.FTP][pS.PASSWORD] = request.GET.get(pS.CONF_FTP_PASS)
-        config[pS.FTP][pS.PORT] = request.GET.get(pS.CONF_FTP_PORT)
-        config[pS.FTP][pS.MAC] = request.GET.get(pS.CONF_FTP_MAC)
+        config = {}
+        backup_name = request.GET.get(pS.CONF_BACKUP_NAME)
+        backup_location = request.GET.get(pS.CONF_BACKUP_LOCATION)
+        handler.fileHelper.check_create_backup_folder(backup_location)
+
+        config[pS.ID_CAPS] = {pS.BACKUP_NAME: backup_name}
+        config[pS.NMAP] = {pS.HOSTS: request.GET.get(pS.CONF_NMAP_RANGE)}
+        config[pS.FTP] = {
+            pS.FTP_IP: request.GET.get(pS.CONF_FTP_IP),
+            pS.USERNAME: request.GET.get(pS.CONF_FTP_USER),
+            pS.PASSWORD: request.GET.get(pS.CONF_FTP_PASS),
+            pS.PORT: request.GET.get(pS.CONF_FTP_PORT),
+            pS.MAC: request.GET.get(pS.CONF_FTP_MAC),
+        }
 
         backup_items = request.GET.get(pS.CONF_BACKUP_ITEMS).split(',')
 
@@ -127,13 +135,17 @@ class HtmlHelper:
         for item in backup_items:
             if pS.SWITCH1 in item or pS.SWITCH2 in item:
                 continue
-            current_item = [item, handler.fileHelper.folder_join(config[pS.PATH][pS.BACKUP_FOLDER], item),
+            current_item = [item, handler.fileHelper.folder_join(backup_location, item),
                             True if item + pS.SWITCH1 in backup_items else False,
                             True if item + pS.SWITCH2 in backup_items else False]
             folders.append(current_item)
-        config[pS.PATH][pS.FOLDERS] = folders.__str__()
 
-        handler.configHelper.save_config()
+        config[pS.PATH] = {
+            pS.FOLDERS: folders.__str__(),
+            pS.BACKUP_FOLDER: backup_location,
+        }
+
+        handler.configHelper.save_config(config, backup_name)
 
         return HttpResponse('')
 
@@ -154,13 +166,15 @@ class HtmlHelper:
 
     @staticmethod
     def ftp_data(_):
-        handler.config[pS.NMAP][pS.FTP_IP] = handler.wiFiHelper.get_ip_by_mac(
-            handler.config[pS.NMAP][pS.HOSTS], handler.config[pS.FTP][pS.MAC])
+        config = handler.configHelper.get_config()
+
+        config[pS.NMAP][pS.FTP_IP] = handler.wiFiHelper.get_ip_by_mac(
+            config[pS.NMAP][pS.HOSTS], config[pS.FTP][pS.MAC])
         return JsonResponse({
-            pS.NAME: handler.config[pS.FTP][pS.USERNAME],
-            pS.PASS: handler.config[pS.FTP][pS.PASSWORD],
-            pS.IP: handler.config[pS.NMAP][pS.FTP_IP],
-            pS.PORT: handler.config[pS.FTP][pS.PORT],
+            pS.NAME: config[pS.FTP][pS.USERNAME],
+            pS.PASS: config[pS.FTP][pS.PASSWORD],
+            pS.IP: config[pS.NMAP][pS.FTP_IP],
+            pS.PORT: config[pS.FTP][pS.PORT],
         })
 
     @staticmethod

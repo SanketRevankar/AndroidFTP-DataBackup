@@ -1,4 +1,4 @@
-body { font-family: 'Salsa', cursive; user-select: none; }
+body { font-family: 'Salsa', cursive; }
 h2 { text-align: center; padding: 1%; color: white; }
 div::-webkit-scrollbar { width: 10px; } /* width */
 div::-webkit-scrollbar-track { background: #f1f1f1; } /* Track */

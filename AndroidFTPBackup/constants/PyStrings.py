@@ -23,18 +23,21 @@ USER = 'user'
 sizes = ['B', 'KB', 'MB', 'GB']
 types = {
     'Images': ['dng', 'jpg', 'jpeg', 'png', 'bmp'],
-    'Audio': ['aac', 'ogg', 'mp3', 'wav', 'amr', 'opus'],
-    'Video': ['mp4', 'gif', '3gp', '3gpp', 'mkv'],
+    'Audio': ['aac', 'ogg', 'mp3', 'wav', 'amr', 'opus', 'm4a'],
+    'Video': ['mp4', 'gif', '3gp', '3gpp', 'mkv', 'flv'],
     'Documents': ['xlsx', 'pdf', 'doc', 'docx', 'pptx', 'txt'],
     'Apps': ['apk'],
     'Compressed': ['zip', 'rar'],
 }
+OTHERS = 'Others'
 WINDOWS = "Windows"
 DARWIN = "Darwin"
 XDS_OPEN_ = "xdg-open_"
 OPEN_ = "open_"
 BACKUP_FOLDER = 'backup_folder'
 PATH = 'Path'
+ID_CAPS = 'ID'
+BACKUP_NAME = 'backup_name'
 FOLDERS = 'folders'
 FILES = 'files'
 SIZES = 'sizes'
@@ -80,9 +83,10 @@ ERROR_SAVING = 'Error saving: '
 ADDED_TO = '\tAdded: {} to {}\n'
 FOLDER_NUM_APPEND = '{}_{}{}'
 ALREADY_EXISTS = '\tAlready Exists: '
-INIT_DATE = '19700101000000.000'
+INIT_DATE = '19800101000000.000'
 PUB_NAME = 'pub_date'
 TIME_FORMAT = '%Y%m%d%H%M%S.000'
+DISPLAY_FORMAT = '%d %b %Y %I:%M:%S %p'
 MODIFY = 'modify'
 DIR = 'dir'
 ANDROIDFTP_MESSAGE = 'AndroidFTPBackup.message'
@@ -92,11 +96,14 @@ GROUP_NAME = 'output'
 MONTHS = 'months'
 RETR = "RETR "
 TYPE_ = 'type'
+BACKUPS_ = 'backups/'
+DEFAULT_BACKUP = 'default_backup'
+BACKUPS = 'backups'
 
-NMAP_ARGS = '-sP'
+NMAP_ARGS = '-sP --max-parallelism 200'
 WRITE = 'w'
 NOT_FOUND = 'Not Found'
-TEMP_XML = 'temp_xml'
+TEMP_XML = 'xml-'
 VENDOR = 'vendor'
 MAC = 'mac'
 ADDR = 'addr'
@@ -118,6 +125,7 @@ CONF_FTP_PASS = 'conf[ftp_pass]'
 CONF_FTP_IP = 'conf[ftp_ip]'
 CONF_NMAP_RANGE = 'conf[nmap_range]'
 CONF_BACKUP_LOCATION = 'conf[backup_location]'
+CONF_BACKUP_NAME = 'conf[backup_name]'
 SWITCH2 = '_switch2'
 SWITCH1 = '_switch1'
 ID = 'id'

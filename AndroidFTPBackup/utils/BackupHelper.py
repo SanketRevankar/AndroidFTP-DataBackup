@@ -1,17 +1,17 @@
 import ftplib
 import logging
 import os
+import uuid
 from datetime import datetime
-from os import path, mkdir
+from os import path
+from win32file import CreateFile, CloseHandle, SetFileTime
 
-import dateutil
 from channels.layers import get_channel_layer
 from dateutil.tz import tzlocal
 from pytz import UTC
 from pywintypes import Time
 from win32con import FILE_SHARE_DELETE, FILE_SHARE_READ, GENERIC_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, \
     FILE_SHARE_WRITE
-from win32file import CreateFile, CloseHandle, SetFileTime, GetFileTime
 
 from AndroidFTPBackup.constants import PyStrings as pS
 from AndroidFTP_Backup import handler
@@ -38,35 +38,48 @@ class BackupHelper:
         CloseHandle(win_file)
         self.logger.info(pS.FILE_CREATED_AT_TIME.format(file_name, win_time))
 
-    async def data_backup(self):
+    async def data_backup(self, backup_name):
+        handler.configHelper.load_config(backup_name, False)
+        config = handler.configHelper.get_config()
+
         ftp = handler.ftpHelper.get_ftp_connection()
-        months = eval(handler.config[pS.PATH][pS.MONTHS])
+        months = eval(config[pS.PATH][pS.MONTHS])
+        last_updated = self.get_last_backup(backup_name)
 
         channel = get_channel_layer()
-        for a in eval(handler.config[pS.PATH][pS.FOLDERS]):
-            await self.backup_folder(a, channel, ftp, months)
+        for a in eval(config[pS.PATH][pS.FOLDERS]):
+            await self.backup_folder(a, channel, ftp, months, backup_name, last_updated)
 
+        date_now = datetime.now().astimezone(tzlocal()).__str__()
         await channel.group_send(pS.GROUP_NAME, {
             pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
-            pS.MESSAGE: pS.BACKUP_COMPLETED_ON + datetime.now().astimezone(tzlocal()).__str__()
+            pS.MESSAGE: pS.BACKUP_COMPLETED_ON + date_now,
+            'state': 'Completed',
+            'value': date_now,
+            'backup_name': backup_name,
         })
-        self.save_date_of_current_backup()
+        handler.fileHelper.async_init()
+        del handler.apiHelper.processes[backup_name]
+        self.save_date_of_current_backup(backup_name)
         ftp.close()
 
-    async def backup_folder(self, a, channel, ftp, months):
-        from AndroidFTPBackup.models import LastBackup
+    async def backup_folder(self, a, channel, ftp, months, backup_name, last_updated):
+        handler.fileHelper.create_folder_if_not_exists(self.logger, a[1])
 
-        self.create_folder_if_not_exists(a[1])
-
-        last_updated = datetime.strptime(
-            LastBackup.objects.get_or_create(id=1, defaults={pS.PUB_NAME: pS.INIT_DATE})[0].pub_date,
-            pS.TIME_FORMAT).astimezone(tzlocal())
-        # self.logger.info("Last updated: {}".format(last_updated))
         c = 0
 
         for file in ftp.mlsd(a[0]):
+            if handler.apiHelper.processes[backup_name]['status'] == 'stop':
+                await channel.group_send(pS.GROUP_NAME, {
+                    pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
+                    'state': 'Cancelled',
+                    'backup_name': backup_name,
+                })
+                del handler.apiHelper.processes[backup_name]
+                raise RuntimeError('Backup stopped by user')
             response = ''
             current_path = a[1]
+            uuid_ = uuid.uuid4().__str__()
 
             if file[1][pS.TYPE_] == pS.DIR:
                 if file[0][0] == '.':
@@ -78,17 +91,19 @@ class BackupHelper:
                     new_a.append(a[1])
                 new_a.append(a[2])
                 new_a.append(a[3])
-                
-                await self.backup_folder(new_a, channel, ftp, months)
+
+                await self.backup_folder(new_a, channel, ftp, months, backup_name, last_updated)
                 continue
             date_file = datetime.strptime(file[1][pS.MODIFY], pS.TIME_FORMAT).replace(tzinfo=UTC).astimezone(tzlocal())
             if date_file >= last_updated:
-                # self.logger.info("File {} Updated on {}".format(file, date_file))
                 if c == 0:
                     response = '* ' + a[0] + '\n'
                     await channel.group_send(pS.GROUP_NAME, {
                         pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
-                        pS.MESSAGE: response
+                        pS.MESSAGE: response,
+                        'state': 'Enter Directory',
+                        'value': a[0],
+                        'backup_name': backup_name,
                     })
                     self.logger.info(pS.BACKING_UP_.format(a[0]))
                     c += 1
@@ -100,10 +115,19 @@ class BackupHelper:
                         year_ = handler.fileHelper.folder_join(current_path, str(year))
                         month_path = handler.fileHelper.folder_join(year_, months[str(month)])
                         file_path = handler.fileHelper.folder_join(month_path, file[0])
-                        self.create_folder_if_not_exists(year_)
-                        self.create_folder_if_not_exists(month_path)
+                        handler.fileHelper.create_folder_if_not_exists(self.logger, year_)
+                        handler.fileHelper.create_folder_if_not_exists(self.logger, month_path)
                     else:
                         file_path = handler.fileHelper.folder_join(current_path, file[0])
+
+                    await channel.group_send(pS.GROUP_NAME, {
+                        pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
+                        'id': uuid_,
+                        'state': 'Copying',
+                        'value': file[0],
+                        'target': file_path,
+                        'backup_name': backup_name,
+                    })
 
                     if path.exists(file_path):
                         name, ext = os.path.splitext(file_path)
@@ -119,27 +143,49 @@ class BackupHelper:
                         self.create_file(file_path, file[0], date_file.timestamp(), a[0], ftp)
                         response += pS.ADDED_TO.format(file[0], file_path)
 
+                    await channel.group_send(pS.GROUP_NAME, {
+                        pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
+                        pS.MESSAGE: response,
+                        'id': uuid_,
+                        'state': 'Saved',
+                        'value': file,
+                        'backup_name': backup_name,
+                    })
+
                 except PermissionError as pe:
                     response += pS.ERROR_SAVING + file[0] + '\n'
                     self.logger.error(pS.ERROR_SAVING_.format(file[0], pe.__str__()))
+                    await channel.group_send(pS.GROUP_NAME, {
+                        pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
+                        'id': uuid_,
+                        'state': 'Error',
+                        'target': pe.__str__(),
+                        'backup_name': backup_name,
+                    })
 
                 except ftplib.error_perm as ep:
                     response += pS.ERROR_SAVING + file[0] + '\n'
                     self.logger.error(pS.ERROR_SAVING_.format(file[0], ep.__str__()))
+                    await channel.group_send(pS.GROUP_NAME, {
+                        pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
+                        'id': uuid_,
+                        'state': 'Error',
+                        'target': ep.__str__(),
+                        'backup_name': backup_name,
+                    })
 
-            await channel.group_send(pS.GROUP_NAME, {
-                pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
-                pS.MESSAGE: response
-            })
+    @staticmethod
+    def get_last_backup(backup_name):
+        from AndroidFTPBackup.models import LastBackup
 
-    def create_folder_if_not_exists(self, folder):
-        if not path.exists(folder):
-            self.logger.info(pS.CREATING_FOLDER.format(folder))
-            mkdir(folder)
+        date = LastBackup.objects.get_or_create(id=backup_name,
+                                                defaults={pS.PUB_NAME: pS.INIT_DATE})[0].pub_date
+        return datetime.strptime(str(date), pS.TIME_FORMAT).astimezone(tzlocal())
 
-    def save_date_of_current_backup(self):
+    def save_date_of_current_backup(self, backup_name):
         from AndroidFTPBackup.models import LastBackup
 
         update = datetime.now().astimezone(tzlocal()).strftime(pS.TIME_FORMAT)
-        LastBackup.objects.update_or_create(id=1, defaults={pS.PUB_NAME: update})
+        LastBackup.objects.update_or_create(id=backup_name,
+                                            defaults={pS.PUB_NAME: update})
         self.logger.info(pS.BACKUP_UPDATED_ON.format(update))

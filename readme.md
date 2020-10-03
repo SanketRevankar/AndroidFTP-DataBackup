@@ -4,6 +4,7 @@
 
 ## Downloads required:
 - [Python3](https://www.python.org/downloads/)
+- [Nmap](https://nmap.org/download.html)
 - Download **WiFi FTP Server** from Playstore to create a FTP Server on mobile phone.
 
 ## Python modules:
@@ -32,13 +33,6 @@
 - Create a SQLite Database:
     ```
     python manage.py migrate AndroidFTPBackup
-    ```
-- Open AndroidFTPBackup/handler.py and uncomment these lines:
-    ```
-    try:
-        self.latest_backup = LastBackup.objects.get(id=1)
-    except LastBackup.DoesNotExist:
-        pass
     ```
 - Start the server:
     ```

@@ -127,10 +127,10 @@ DIV_LIST_ONE = """
                 """
 DIV_LIST_BOTH = """
                     <div class="list-group-item">
-                        <li class=" fas fa-calendar-alt" title='Folders within the selected folders to be backed up as
-                         one folder only'></li>
-                        <li class="fas fa-sitemap" title='Folders with year and month of creation are created for 
+                        <li class=" fas fa-calendar-alt" title='Folders with year and month of creation are created for 
                         backing up files'></li>
+                        <li class="fas fa-sitemap" title='Folders within the selected folders to be backed up as
+                         one folder only'></li>
                         <a>{}</a>
                     </div>
                 """
