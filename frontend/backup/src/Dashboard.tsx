@@ -30,7 +30,7 @@ class Dashboard extends React.Component<{ data: any }, any> {
             .catch();
         fetch('/AndroidFTPBackup/api/load_dir_data?query=', { signal: this.controller.signal })
             .then(response => response.json())
-            .then(data => {console.log(data); this.setState({ side_panel_data: data, total_size: data['current_size'] })})
+            .then(data => { this.setState({ side_panel_data: data, total_size: data['current_size'] })})
             .catch();
     }
 
