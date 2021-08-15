@@ -113,4 +113,4 @@ CHANNEL_LAYERS = {
 LOGGING_CONFIG = None
 
 import logging.config
-logging.config.fileConfig(r'C:\Users\Sanketsr\PycharmProjects\AndroidFTP-DataBackup\AndroidFTPBackup\conf\log.conf')
+logging.config.fileConfig(BASE_DIR + r'\AndroidFTPBackup\conf\log.conf')
