@@ -1,12 +1,12 @@
 body { font-family: 'Salsa', cursive; }
 h2 { text-align: center; padding: 1%; color: white; }
-div::-webkit-scrollbar { width: 10px; } /* width */
-div::-webkit-scrollbar-track { background: #f1f1f1; } /* Track */
-div::-webkit-scrollbar-thumb { background: #888; } /* Handle */
-div::-webkit-scrollbar-thumb:hover { background: #555; } /* Handle on hover */
+*::-webkit-scrollbar { width: 10px; } /* width */
+*::-webkit-scrollbar-track { background: #f1f1f1; } /* Track */
+*::-webkit-scrollbar-thumb { background: #888; } /* Handle */
+*::-webkit-scrollbar-thumb:hover { background: #555; } /* Handle on hover */
 .footer-link { color: white; margin-right: 1%; text-decoration: none; }
 .ai-b { align-items: baseline; }
-.google-chart { display: inline-block; height: 35vh; width: 45vw; margin-left: -5%; }
+.google-chart{ height: 35vh; width: 30vw; margin-left: 7.5vw }
 .badge-top { padding: 1.5%; font-size: inherit; font-weight: inherit; }
 .top-info { margin-left: 12%; margin-right: 1%; }
 .half-block { width: 48%; display: inline-block; vertical-align: top; }
@@ -14,9 +14,19 @@ div::-webkit-scrollbar-thumb:hover { background: #555; } /* Handle on hover */
 #open-backup { vertical-align: baseline; }
 .list-header { color: white !important; background: #3a3939 !important; }
 .back-button { margin-right: 2%; font-size: large; text-decoration: none !important; }
-.list-group-div { max-height: 75vh; overflow-y: auto; border: black 1px solid }
+.list-group-div { max-height: 72vh; overflow-y: auto; }
 .size-badge { vertical-align: top; float: right; width: 5vw; font-size: .6vw; padding: .75% 2%; font-weight: 500;}
 #refresh-wifi-connections { margin-left: 0.5%; text-decoration: none; }
 .fa-cool { color: black !important; text-decoration: none !important; }
 .fast-spin { -webkit-animation: spinner-border 1s linear infinite;animation: spinner-border 1s linear infinite; }
 #text-streaming { width: 100%; height: 30vh; }
+*:focus { outline: none !important; }
+.MuiTextField-root.valid-true > div > fieldset { border-color: #4caf50; border-width: 2px; }
+.MuiTextField-root.valid-false > div > fieldset { border-color: #f44336; border-width: 2px; }
+.MuiTextField-root.valid-true > label { color: #4caf50; }
+.MuiTextField-root.valid-true > div > div > svg { color: #4caf50; }
+.MuiTextField-root.valid-false > label { color: #f44336; }
+.MuiTextField-root.valid-false > div > div > svg { color: #f44336; }
+.w-35 { width: 35% !important }
+.active { font-weight: bold !important; }
+.wrap-left { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; }

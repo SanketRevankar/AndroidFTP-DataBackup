@@ -3,7 +3,8 @@ import logging
 import os
 import platform
 import threading
-from os import path, mkdir
+from os import path
+from pathlib import Path
 
 from AndroidFTPBackup.constants import PyStrings as pS
 from AndroidFTP_Backup import handler
@@ -12,7 +13,6 @@ from AndroidFTP_Backup import handler
 class FileHelper:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(pS.LOG_INIT.format(__name__))
 
         self.dirs = {}
         self.data_list_space = {pS.TYPE: pS.SIZE}
@@ -62,6 +62,7 @@ class FileHelper:
                         data[pS.OTHERS][pS.COUNT] += 1
 
             self.dirs[replace_a][pS.SIZES] = sizes
+            self.dirs[replace_a][pS.NAME] = replace_a.split('/')[-1]
 
         self.set_sizes(config[pS.PATH][pS.BACKUP_FOLDER])
 
@@ -82,11 +83,8 @@ class FileHelper:
 
         return round(size, 2), pS.sizes[n]
 
-    def open_(self, open_path):
-        config = handler.configHelper.get_config()
-
-        self.logger.info(pS.OPEN_DIR.format(open_path))
-        open_path = self.folder_join(config[pS.PATH][pS.BACKUP_FOLDER], open_path)
+    def open_file(self, open_path):
+        self.logger.info(pS.OPEN_FILE.format(open_path))
         if platform.system() == pS.WINDOWS:
             os.startfile(open_path)
         elif platform.system() == pS.DARWIN:
@@ -116,7 +114,7 @@ class FileHelper:
     def create_folder_if_not_exists(logger, folder):
         if not path.exists(folder):
             logger.info(pS.CREATING_FOLDER.format(folder))
-            mkdir(folder)
+            Path(folder).mkdir(parents=True, exist_ok=True)
 
     def async_init(self):
         loop = asyncio.new_event_loop()

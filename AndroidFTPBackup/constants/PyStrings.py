@@ -15,6 +15,7 @@ NAME = 'name'
 HOSTS = 'hosts'
 NMAP = 'Nmap'
 USER = 'user'
+FTP_PATH = 'path'
 
 """ --------------------------------------------------------------------------------------------------------------------
                                                  STRINGS USED FOR FILE
@@ -59,7 +60,7 @@ FILE_ALREADY_EXISTS_ = 'File already exists: {}'
 ERROR_SAVING_ = 'Error saving: {}.\n{}'
 FILE_INFO = 'Data Type: {} - Count: {} Size: {}'
 SYSTEM_DATA_COLLECTION = 'Initiating file system data collection'
-OPEN_DIR = 'Open dir: {}'
+OPEN_FILE = 'Open File: {}'
 CREATING_DIR = 'Creating dir: {}'
 FETCHING_FOLDER_LIST = 'Fetching folder list'
 LOG_SEPERATOR = '------------------------------------------------------------------------'

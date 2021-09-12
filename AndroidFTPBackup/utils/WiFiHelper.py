@@ -11,7 +11,6 @@ from AndroidFTPBackup.constants import PyStrings as pS
 class WiFiHelper:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(pS.LOG_INIT.format(__name__))
 
     def get_wifi_connections(self, request):
         hosts = {}
