@@ -14,12 +14,11 @@ class ConfigHelper:
         self.logger.info('{} - Initiated'.format(__name__))
         self.config = self.init_config_parser()
         self.config.read(_conf + 'main.conf')
+        self.default_loaded = True
         self.logger.info('Loaded default config')
-        if pS.DEFAULT_BACKUP not in self.config[pS.ID_CAPS]:
-            self.default_loaded = True
-        else:
+        self.backups = eval(self.config[pS.ID_CAPS][pS.BACKUPS])
+        if len(self.backups) != 0:
             backup_name = self.config[pS.ID_CAPS][pS.DEFAULT_BACKUP]
-            self.backups = eval(self.config[pS.ID_CAPS][pS.BACKUPS])
             self.load_config(backup_name)
             self.default_loaded = False
 
@@ -51,8 +50,9 @@ class ConfigHelper:
             self.backups = [backup_name]
 
         self.write_config(_conf + 'main.conf', main_config)
-
         self.load_config(backup_name)
+        if backup_name not in self.backups:
+            self.backups.append(backup_name)
 
     @staticmethod
     def write_config(conf_backup_name, config_parser):

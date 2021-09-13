@@ -8,8 +8,6 @@ from AndroidFTP_Backup import handler
 class FtpHelper:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(pS.LOG_INIT.format(__name__))
-        self.ftp_connected = False
 
     def test_wifi_connection(self, ip, port, user, pass_):
         ftp = ftplib.FTP()
@@ -40,6 +38,19 @@ class FtpHelper:
 
         if result == 0:
             for file in ftp.mlsd():
+                if file[1]['type'] == 'dir':
+                    dir_list.append(file[0])
+
+        return dir_list
+
+    def get_dirs(self, ip, port, username, password, path):
+        ftp = ftplib.FTP()
+        result = self.ftp_connect(ftp, ip, port, username, password)
+
+        dir_list = []
+
+        if result == 0:
+            for file in ftp.mlsd(path):
                 if file[1]['type'] == 'dir':
                     dir_list.append(file[0])
 

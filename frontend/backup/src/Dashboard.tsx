@@ -1,5 +1,18 @@
 import * as React from 'react';
 import { Chart } from "react-google-charts";
+import DataUsageIcon from '@material-ui/icons/DataUsage';
+import FolderOpenIcon from '@material-ui/icons/FolderOpen';
+import TreeView from '@material-ui/lab/TreeView';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import Directory from './models/Directory';
+import TreeItem from '@material-ui/lab/TreeItem';
+import { Button, IconButton, Typography } from '@material-ui/core';
+import Paper from '@material-ui/core/Paper';
+import DescriptionIcon from '@material-ui/icons/Description';
+import Tooltip from '@material-ui/core/Tooltip';
+import FolderIcon from '@material-ui/icons/Folder';
+import { Skeleton } from '@material-ui/lab';
 
 class Dashboard extends React.Component<{ data: any }, any> {
     controller = new AbortController();
@@ -8,30 +21,64 @@ class Dashboard extends React.Component<{ data: any }, any> {
         super(props);
 
         this.state = {
-            total_size: '0',
             context: {},
+            dirs: { '': new Directory('', '', '') },
             data_size: [],
             data_count: [],
-            side_panel_data: '',
-            current_dir: '',
-            last_dir: '',
+            data_loaded: false,
+            base_dir: '',
         };
-
-        this.loadLocation = this.loadLocation.bind(this)
-        this.upDirectory = this.upDirectory.bind(this)
-        this.handleFolderOpen = this.handleFolderOpen.bind(this)
+        
         this.handleFileOpen = this.handleFileOpen.bind(this)
+        this.renderTree = this.renderTree.bind(this)
+        this.loadDirs = this.loadDirs.bind(this)
     }
 
     public componentDidMount() {
-        fetch('/AndroidFTPBackup/api/get-chart?id=', { signal: this.controller.signal })
+        this.loadDashData()
+    }
+
+    loadDashData() {
+        this.loadDirs()
+    }
+
+    loadDirs() {
+        const loadDirs = this.loadDirs 
+        fetch('/AndroidFTPBackup/api/dashboard-data', { signal: this.controller.signal })
             .then(response => response.json())
-            .then(data => this.setState({ data_size: data['size_chart_data'], data_count: data['count_chart_data'] }))
-            .catch();
-        fetch('/AndroidFTPBackup/api/load_dir_data?query=', { signal: this.controller.signal })
-            .then(response => response.json())
-            .then(data => { this.setState({ side_panel_data: data, total_size: data['current_size'] })})
-            .catch();
+            .then(data => {
+                console.log(data)
+                if (!data.initiated) {
+                    setTimeout(function(){ loadDirs() }, 5000);
+                    return
+                }
+
+                let dirs = {}
+                {
+                    Object.entries(data.dirs).map(([key, index]) => {
+                        dirs[key] = {
+                            path: key,
+                            name: data.dirs[key].name,
+                            subDirectories: data.dirs[key].folders,
+                            files: data.dirs[key].files,
+                            backupLocation: ''
+                        }
+                    })
+                }
+
+                this.setState({
+                    dirs: dirs,
+                    data_loaded: true,
+                    base_dir: data.base_dir,
+                    data_size: data['size_chart_data'],
+                    data_count: data['count_chart_data'],
+                    total_size: data['total_size'],
+                })
+            })
+            .catch(e => {
+                console.log(e)
+            });
+            
     }
 
     componentWillUnmount() {
@@ -39,100 +86,216 @@ class Dashboard extends React.Component<{ data: any }, any> {
     }
 
     public render() {
-        const pieOptions = {
-            fontName: "'Salsa', cursive",
-            pieHole: 0.4,
-            height: "100%"
+        if (!this.state.data_loaded) {
+            return this.loading()
+        } else {
+            return this.dashboard()
         }
- 
-        let folders = ''
-        let files = ''
-        if (this.state.side_panel_data.length !== 0) {
-            folders = this.state.side_panel_data.folders.map((item: any) => {
-                return (
-                    <button type="button" className="list-group-item list-group-item-action" id="next_dir" name={item[0]} key={item[0]}
-                        onClick={() => this.handleFolderOpen(item[0])}>
-                        <i className="fas fa-folder-open mr-1"></i>
-                        <span>{item[0]}</span>
-                        <span className="badge badge-pill badge-dark size-badge">{item[1]}</span>
-                    </button>
-                )
-            });
-            files = this.state.side_panel_data.files.map((item: any) => {
-                return (
-                    <button type="button" className="list-group-item list-group-item-action" id="next_dir" name={item[0]} key={item[0]}
-                        onClick={() => this.handleFileOpen(item[0])}>
-                        <i className="fas fa-file mr-2"></i>
-                        <span>{item[0]}</span>
-                        <span className="badge badge-pill badge-dark size-badge">{item[1]}</span>
-                    </button>
-                )
-            });
-        }
+    }
+
+    loading() {
         return (
-            <div>
-                <div className="div-container">
-                    <div className="half-block">
-                        <i className="fas fa-folder-open top-info"></i>
-                        <button className="btn btn-primary" onClick={() => this.handleFileOpen('')}>Open Backup Folder</button>
-                        <i className="fas fa-hdd top-info" title="Disk Space Used"></i>
-                        <span className="badge badge-primary badge-top" id="total-size">{this.state.total_size}</span>
-                        <div id="size-chart" className="google-chart">
-                            {/* @ts-ignore */}
-                            <Chart chartType="PieChart" data={this.state.data_size} options={{ ...pieOptions, title: "Disk Space used in GB" }} />
-                        </div>
-                        <div id="count-chart" className="google-chart">
-                            {/* @ts-ignore */}
-                            <Chart chartType="PieChart" data={this.state.data_count} options={{ ...pieOptions, title: "Number of files" }} />
-                        </div>
-                    </div>
-                    <div className="half-block">
-                        <div id="backup_dir">
-                            <li className="list-group-item list-group-item-action list-group-item-secondary list-header">
-                                <a href="#" className="fas fa-chevron-circle-left back-button text-light text-decoration-none"
-                                    onClick={() => this.upDirectory()}></a>
-                                {this.state.side_panel_data.current_dir}
-                                <span className="badge badge-pill badge-light size-badge">
-                                    {this.state.side_panel_data.current_size}
-                                </span>
-                            </li>
-                            <div className="list-group list-group-flush list-group-div">
-                                {folders}
-                                {files}
-                            </div>
-                        </div>
-                    </div>
+            <div className='d-flex flex-column justify-content-center align-items-center' style={{ height: 100 + 'vh' }}>
+                <Typography variant='h4' color='textSecondary'>
+                    Loading
+                </Typography>
+                <Skeleton className='w-50' />
+                <Skeleton className='w-50' animation="wave" />
+            </div>
+        )
+    }
+
+    dashboard() {
+        return (
+            <div style={{ marginTop: 10 + 'vh', marginBottom: 5 + 'vh' }}>
+                <div className="d-flex">
+                    {this.getStatistics()}
+                    {this.getFiles()}
                 </div>
             </div>
         )
     }
 
-    handleFolderOpen(query: string) {
-        this.loadLocation(this.state.current_dir + '/' + query)
+    getFiles() {
+        return (
+            <div className="w-50 mx-5">
+                <Typography variant='h4'>
+                    Backed up Files
+                </Typography>
+                <Paper className='w-100 mt-2 list-group-div' elevation={3}>
+                    <TreeView
+                        defaultCollapseIcon={<ExpandMoreIcon />}
+                        defaultExpandIcon={<ChevronRightIcon />}
+                        defaultExpanded={[this.state.base_dir]}
+                        className='px-3 py-2'
+                    >
+                        {this.renderTree(this.state.dirs[this.state.base_dir])}
+                    </TreeView>
+                </Paper>
+            </div>
+        )
     }
 
-    handleFileOpen(query: string) {
-        fetch('/AndroidFTPBackup/api/open_?query=' + this.state.current_dir + '/' + query, { signal: this.controller.signal })
-    }
-
-    upDirectory() {
-        if (this.state.current_dir.length === 0) {
-            this.loadLocation('')
+    renderTree(nodes: Directory) {
+        if (this.nodeHasSubDirectories(nodes) || this.nodeHasFiles(nodes)) {
+            return this.getNonLeaf(nodes)
         } else {
-            const lastSlash = this.state.current_dir.lastIndexOf('/');
-            this.loadLocation(this.state.current_dir.slice(0, lastSlash))
+            return this.getLeaf(nodes)
+
         }
     }
 
-    loadLocation(query: string) {
-        fetch('/AndroidFTPBackup/api/load_dir_data?query=' + query, { signal: this.controller.signal })
-            .then(response => response.json())
-            .then(data => this.setState({
-                last_dir: this.state.last_dir.length <= this.state.current_dir.length ? this.state.last_dir : this.state.current_dir,
-                current_dir: query,
-                side_panel_data: data
-            }));
+    nodeHasSubDirectories(nodes: Directory) {
+        return nodes.subDirectories && nodes.subDirectories.length > 0
     }
+
+    nodeHasFiles(nodes: Directory) {
+        return nodes.files && nodes.files.length > 0
+    }
+
+    getLeaf(nodes: Directory) {
+        return (
+            <TreeItem
+                key={nodes.path}
+                nodeId={nodes.path}
+                label={
+                    <div className='align-items-center d-flex'>
+                        <IconButton onClick={() => this.handleFileOpen(nodes.path)}>
+                            <FolderOpenIcon />
+                        </IconButton>
+                        <h6 className='mb-0 mt-1'>
+                            {nodes.name}
+                        </h6>
+                    </div>
+                }>
+            </TreeItem>
+        )
+    }
+
+    getNonLeaf(nodes: Directory) {
+        return (
+            <TreeItem
+                key={nodes.path}
+                nodeId={nodes.path}
+                onLabelClick={(e) => { e.preventDefault() }}
+                label={
+                    <div className='align-items-center d-flex'>
+                        <IconButton onClick={() => this.handleFileOpen(nodes.path)}>
+                            <FolderIcon />
+                        </IconButton>
+                        <h6 className='mb-0 mt-1'>
+                            {nodes.name}
+                        </h6>
+                    </div>
+                }>
+                {this.getSubDirectories(nodes)}
+                {this.getSubFiles(nodes)}
+            </TreeItem >
+        )
+    }
+
+    getSubDirectories(nodes: Directory) {
+        if (this.isNotEmpty(nodes.subDirectories)) {
+            // @ts-ignore
+            return nodes.subDirectories.map((node) => (this.renderTree(this.state.dirs[nodes.path + "/" + node])))
+        }
+        return null
+    }
+
+    getSubFiles(nodes: Directory) {
+        if (this.isNotEmpty(nodes.files)) {
+            // @ts-ignore
+            return nodes.files.map((node) => (this.renderFile(nodes.path + "/" + node, node)))
+        }
+        return null
+    }
+
+    isNotEmpty(data: string[] | undefined) {
+        return data && data.length > 0
+    }
+
+    renderFile(path: string, name: string) {
+        return (
+            <TreeItem
+                key={path}
+                nodeId={path}
+                label={
+                    <div className='align-items-center d-flex'>
+                        <Tooltip title={<h6 className='my-1'>Open '{path}'</h6>}>
+                            <IconButton onClick={() => this.handleFileOpen(path)} color='secondary'>
+                                <DescriptionIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <h6 className='mb-0 mt-1'>
+                            {name}
+                        </h6>
+                    </div>
+                }>
+            </TreeItem >
+        )
+    }
+
+    getStatistics() {
+        return (
+            <div className="w-50 mx-5">
+                <div className='d-flex justify-content-center'>
+                    <Button
+                        onClick={() => this.handleFileOpen(this.state.base_dir)}
+                        variant='contained'
+                        color='primary'
+                        className='mr-3'
+                    >
+                        <FolderOpenIcon className='mr-2' /> Open Backup Folder
+                    </Button>
+                    <Button
+                        variant='contained'
+                        color='primary'
+                    >
+                        <DataUsageIcon className='mr-2' /> Total: {this.state.total_size}
+                    </Button>
+                </div>
+                {this.getChart(this.state.data_size, "Disk Space used in GB")}
+                {this.getChart(this.state.data_count, "Number of files")}
+            </div>
+        )
+    }
+
+    getChart(data: any, title: string) {
+        return (
+            <div className="google-chart mt-3">
+                <Chart
+                    chartType="PieChart"
+                    data={data}
+                    height='100%'
+                    options={{ ...this.getPieOptions(), title: title }}
+                />
+            </div>
+        )
+    }
+
+    getPieOptions() {
+        const bgColor = this.props.data.themeType == 'dark' ? '#424242' : '#fafafa'
+        const color = this.props.data.themeType == 'dark' ? '#fafafa' : '#424242'
+
+        const pieOptions = {
+            pieHole: 0.4,
+            backgroundColor: bgColor,
+            legend: {
+                textStyle: { color: color }
+            },
+            pieSliceBorderColor: bgColor,
+            titleTextStyle: {
+                color: color
+            },
+        }
+
+        return pieOptions
+    }
+
+    handleFileOpen(query: string) {
+        fetch('/AndroidFTPBackup/api/open_?query=' + query, { signal: this.controller.signal })
+    }
+
 }
 
 export default Dashboard;

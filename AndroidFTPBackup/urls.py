@@ -6,6 +6,7 @@ from . import views
 
 urlpatterns = [
     path(r'api/<str:func>', views.api, name='ftp_data'),
-    path('react/<str:page>', views.react, name='react'),
+    path('<str:page>', views.react, name='react'),
+    path('config/<str:page>', views.react, name='react'),
     path('', views.react, name='index'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

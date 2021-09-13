@@ -4,7 +4,6 @@ import os
 import uuid
 from datetime import datetime
 from os import path
-from win32file import CreateFile, CloseHandle, SetFileTime
 
 from channels.layers import get_channel_layer
 from dateutil.tz import tzlocal
@@ -12,8 +11,11 @@ from pytz import UTC
 from pywintypes import Time
 from win32con import FILE_SHARE_DELETE, FILE_SHARE_READ, GENERIC_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, \
     FILE_SHARE_WRITE
+from win32file import CreateFile, CloseHandle, SetFileTime
 
+from AndroidFTPBackup import service
 from AndroidFTPBackup.constants import PyStrings as pS
+from AndroidFTPBackup.utils.FtpHelper import FtpHelper
 from AndroidFTP_Backup import handler
 
 
@@ -42,7 +44,7 @@ class BackupHelper:
         handler.configHelper.load_config(backup_name, False)
         config = handler.configHelper.get_config()
 
-        ftp = handler.ftpHelper.get_ftp_connection()
+        ftp = FtpHelper().get_ftp_connection()
         months = eval(config[pS.PATH][pS.MONTHS])
         last_updated = self.get_last_backup(backup_name)
 
@@ -55,11 +57,12 @@ class BackupHelper:
             pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
             pS.MESSAGE: pS.BACKUP_COMPLETED_ON + date_now,
             'state': 'Completed',
+            'id': uuid.uuid4().__str__(),
             'value': date_now,
             'backup_name': backup_name,
         })
         handler.fileHelper.async_init()
-        del handler.apiHelper.processes[backup_name]
+        del service.BackupService.processes[backup_name]
         self.save_date_of_current_backup(backup_name)
         ftp.close()
 
@@ -69,13 +72,16 @@ class BackupHelper:
         c = 0
 
         for file in ftp.mlsd(a[0]):
-            if handler.apiHelper.processes[backup_name]['status'] == 'stop':
+            if service.BackupService.processes[backup_name]['status'] == 'stop':
+                date_now = datetime.now().astimezone(tzlocal()).__str__()
                 await channel.group_send(pS.GROUP_NAME, {
                     pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
                     'state': 'Cancelled',
+                    'id': uuid.uuid4().__str__(),
                     'backup_name': backup_name,
+                    'value': date_now,
                 })
-                del handler.apiHelper.processes[backup_name]
+                del service.BackupService.processes[backup_name]
                 raise RuntimeError('Backup stopped by user')
             response = ''
             current_path = a[1]
@@ -101,6 +107,7 @@ class BackupHelper:
                     await channel.group_send(pS.GROUP_NAME, {
                         pS.TYPE_: pS.ANDROIDFTP_MESSAGE,
                         pS.MESSAGE: response,
+                        'id': uuid.uuid4().__str__(),
                         'state': 'Enter Directory',
                         'value': a[0],
                         'backup_name': backup_name,
