@@ -1,0 +1,6 @@
+python-nmap~=0.6.1
+channels~=2.2.0
+python-dateutil~=2.4.2
+pytz~=2018.4
+Django~=2.2.15
+pywin32~=301
