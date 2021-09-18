@@ -147,7 +147,7 @@ class BackupProgress extends React.Component<{ data: any }, any> {
         let backupStarted = this.state.backupStarted
         let backupData = this.state.backupData
         if (backupData.length === 0 && data.state !== "Enter Directory") {
-            backupData.push(['Backing up', {}])
+            backupData.push(['', {}])
         }
         if (data.state === "Enter Directory") {
             backupData.push([data.value, {}])
