@@ -13,7 +13,7 @@ export default function Steps(props: StepsProps) {
     return (
         <Box className="d-flex">
             <Divider />
-            <Box className="d-flex flex-column">
+            <Box className="d-flex flex-column" sx={{ height: '83vh', overflow: 'overlay' }}>
                 {props.steps.map((step, index) => (
                     <React.Fragment key={index}>
                         <Box
@@ -36,7 +36,7 @@ export default function Steps(props: StepsProps) {
                     </React.Fragment>
                 ))}
             </Box>
-            <Divider orientation='vertical' sx={{ height: '80vh', mr: 4 }} />
+            <Divider orientation='vertical' sx={{ height: '83vh', mr: 4 }} />
             <div className="d-flex">
                 {props.steps.map((step, index) => (
                     <Slide direction="up" key={index} in={props.value === index} mountOnEnter timeout={0}>

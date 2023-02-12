@@ -1,70 +1,43 @@
 import logging
-import os
-import uuid
-import xml.etree.ElementTree as Et
-
-import nmap
+from builtins import len
 
 
 class WiFiHelper:
     logger = logging.getLogger(__name__)
 
     @classmethod
-    def get_connected_devices(cls, ip):
-        cls.logger.info('Getting wifi connections on: {}'.format(ip))
-        uuid_ = uuid.uuid4().__str__()
-        root = cls.start_nmap(ip, uuid_)
-
-        devices = []
-        for child in root:
-            if child.tag == 'host':
-                host = {}
-                for element in child:
-                    if element.tag == 'address':
-                        if element.attrib['addrtype'] == 'ipv4':
-                            host['ip'] = element.attrib['addr']
-                        if element.attrib['addrtype'] == 'mac':
-                            host['mac'] = element.attrib['addr']
-                            if 'vendor' in element.attrib:
-                                host['vendor'] = element.attrib['vendor']
-                if 'mac' in host:
-                    devices.append(host)
-
-        os.remove(uuid_)
+    def get_connected_devices(cls, ip_range):
+        cls.logger.info('Getting wifi connections on: {}'.format(ip_range))
+        devices = cls.get_devices_by_nmap(ip_range)
 
         return devices
 
     @classmethod
-    def get_ip_by_mac(cls, hosts, mac):
-        cls.logger.info('Getting wifi connection with MAC: {} on {}'.format(mac, hosts))
-        uuid_ = uuid.uuid4().__str__()
-        root = cls.start_nmap(hosts, uuid_)
+    def get_ip_by_mac(cls, ip_range, mac):
+        cls.logger.info('Getting wifi connection with MAC: {} on {}'.format(mac, ip_range))
+        devices = cls.get_devices_by_nmap(ip_range)
 
-        last_ip = ''
-        for child in root:
-            if child.tag == 'host':
-                for c in child:
-                    if c.tag == 'address':
-                        if c.attrib['addrtype'] == 'ipv4':
-                            last_ip = c.attrib['addr']
-                        if c.attrib['addrtype'] == 'mac':
-                            if mac == c.attrib['addr']:
-                                cls.logger.info('Wifi connection with MAC: {} has IP: {}'.format(mac, last_ip))
-                                os.remove(uuid_)
-                                return last_ip
+        matched_entry = list(filter(lambda a: a['mac'] == mac, devices))
+        if len(matched_entry) == 1:
+            return matched_entry[0]['ip']
 
-        os.remove(uuid_)
-
-        cls.logger.warning('Wifi connection with MAC: {} on {} not found'.format(mac, hosts))
+        cls.logger.warning('Wifi connection with MAC: {} on {} not found'.format(mac, ip_range))
         return 'Not Found'
 
     @classmethod
-    def start_nmap(cls, hosts, uuid_):
+    def get_devices_by_nmap(cls, hosts):
+        import nmap
+
         nm = nmap.PortScanner()
-        nm.scan(hosts=hosts, arguments='-sP --max-parallelism 200')
-        nm_mxl = nm.get_nmap_last_output()
-        file = open(uuid_, 'w')
-        file.write(nm_mxl)
-        file.close()
-        tree = Et.parse(uuid_)
-        return tree.getroot()
+        nm.scan(hosts=hosts, arguments='-sP')
+
+        hosts = []
+        for x in nm.all_hosts():
+            if 'mac' in nm[x]['addresses']:
+                mac = nm[x]['addresses']['mac']
+                host = dict(ip=x, mac=mac)
+                if mac in nm[x]['vendor']:
+                    host['vendor'] = nm[x]['vendor'][mac]
+                hosts.append(host)
+
+        return hosts

@@ -98,7 +98,7 @@ export default function BackupDetails(props: BackupDetailsProps) {
                 </div>
             </Box>
             <Button variant="contained" color="primary" onClick={validateBackupDetails}>
-                Scan
+                Next
             </Button>
         </div>
     )
