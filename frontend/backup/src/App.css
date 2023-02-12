@@ -9,7 +9,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+    animation: App-logo-spin infinite 1s linear;
   }
 }
 
@@ -32,6 +32,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -39,4 +40,33 @@
 
 *:focus {
   outline: none !important;
+}
+
+.w-40 {
+  width: 40%;
+}
+
+.selected {
+  border-bottom: 2px solid white !important;
+}
+
+*::-webkit-scrollbar {
+  background-color: transparent;
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: transparent;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background-color: rgb(133, 133, 133, .5);
 }

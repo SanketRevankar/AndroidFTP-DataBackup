@@ -1,32 +1,16 @@
-# AndroidFTP-DataBackup [Django Framework]
+# Android Data Backup using FTP
 
-**AndroidFTP-DataBackup** is used to backup up files from android phone to Laptop/ PC using a FTP Server hosted on the phone.
+**AndroidFTP-DataBackup** is used to back up files from android phone to Laptop/ PC using an FTP Server hosted on the phone.
 
-## Downloads required:
+## Setup required:
 - [Python3](https://www.python.org/downloads/)
-- [Nmap](https://nmap.org/download.html)
-- Download **WiFi FTP Server** from Playstore to create a FTP Server on mobile phone.
-
+- Download **Wi-Fi FTP Server** from Playstore to create an FTP Server on mobile phone.
+## Optional:
+- [Nmap](https://nmap.org/download.html) - Can be used to list devices from your network.
 ## Python modules:
-- Install Django
+- Install Python modules (from the base folder or provide path to requirements.txt)
     ```
-    pip install django
-    ```
-- Install channels
-    ```
-    pip install channels
-    ```
-- Install Nmap extension for Python
-    ```
-    pip install python-nmap
-    ```
-- Install Dateutil
-    ```
-    pip install python-dateutil
-    ```
-- Install win32 libraries
-    ```
-    pip install pywin32
+    pip install -r requirements.txt
     ```
 
 ## Starting Django app

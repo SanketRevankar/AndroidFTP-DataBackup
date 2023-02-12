@@ -1,101 +1,87 @@
-import * as React from 'react';
-import BackupDirView from './BackupDirView';
-import BackupForm from './BackupForm';
-import { Button, Stepper } from '@material-ui/core';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
-import BackupProgress from './BackupProgress';
+import { Box } from '@mui/material';
+import { useEffect, useState } from 'react';
+import BackupStatus from 'src/model/BackupStatus';
+import BasicConfig from 'src/model/config/BasicConfig';
+import FtpConfig from 'src/model/config/FtpConfig';
+import WebDirectoryConfig from 'src/model/config/WebDirectoryConfig';
+import BackupService from 'src/service/BackupService';
+import StartBackup from './steps/StartBackup';
+import TestConnection from './steps/TestConnection';
+import BackupProgress from './steps/BackupProgress';
+import StepData from 'src/model/StepData';
+import Steps from 'src/utils/Steps';
 
-class Backup extends React.Component<{ data: any }, any> {
-    constructor(props: any) {
-        super(props);
-
-        this.state = {
-            backupStarted: { value: this.props.data.backupData.backup_started, state: 'Started' },
-            basicConfig: this.props.data.basicConfig,
-            ftpConfig: this.props.data.ftpConfig,
-            directoryConfig: this.props.data.directoryConfig,
-            activeStep: this.props.data.backupData.backup_started ? 2 : 0,
-        }
-
-        this.startBackup = this.startBackup.bind(this)
-        this.cancelBackup = this.cancelBackup.bind(this)
-        this.getSteps = this.getSteps.bind(this)
-        this.getStepContent = this.getStepContent.bind(this)
-        this.handleNext = this.handleNext.bind(this)
-        this.handleBack = this.handleBack.bind(this)
-    }
-
-    handleNext() {
-        this.setState({ activeStep: this.state.activeStep + 1 });
-    }
-
-    handleBack() {
-        this.setState({ activeStep: this.state.activeStep - 1 });
-    }
-
-    getSteps() {
-        return ['Test Connection', 'Start Backup', 'Backup Progress']
-    }
-
-    getStepContent(step: number) {
-        return [
-            <BackupForm data={{
-                ftpConfig: this.state.ftpConfig,
-                handleNext: this.handleNext,
-            }} />,
-            <Button
-                color='primary'
-                variant='contained'
-                onClick={this.startBackup}
-                className='mt-3'
-            >
-                Start Backup
-            </Button>,
-            <BackupProgress data={{
-                backup_name: this.state.basicConfig.backupName.value,
-                backup_started: this.state.backup_started,
-                cancelBackup: this.cancelBackup
-            }} />,
-        ][step]
-    }
-
-    public render() {
-        const steps = this.getSteps()
-        return (
-            <div className="d-flex mx-5" style={{ marginTop: 10 + 'vh', marginBottom: 7 + 'vh' }}>
-                <BackupDirView data={{ savedDirs: this.state.directoryConfig.savedDirs }} />
-                <div className='w-100'>
-                    <Stepper activeStep={this.state.activeStep} orientation="vertical">
-                        {steps.map((label, index) => (
-                            <Step key={label}>
-                                <StepLabel>{label}</StepLabel>
-                                <StepContent>
-                                    {this.getStepContent(index)}
-                                </StepContent>
-                            </Step>
-                        ))}
-                    </Stepper>
-                </div>
-            </div>
-        )
-    }
-
-    startBackup() {
-        fetch('/AndroidFTPBackup/api/start_backup?backup_name=' + this.props.data.backupData.selectedConfig)
-        let backupStarted = this.state.backupStarted
-        backupStarted.value = true
-        this.setState({ backupStarted: backupStarted, activeStep: this.state.activeStep + 1 })
-    }
-
-    cancelBackup() {
-        fetch('/AndroidFTPBackup/api/cancel_backup?backup_name=' + this.props.data.backupData.selectedConfig)
-        let backupStarted = this.state.backupStarted
-        backupStarted.value = true
-        backupStarted.state = 'Cancelled'
-        this.setState({ backupStarted: backupStarted })
-    }
+interface BackupProps {
+    readConfig: Function
+    backupData: BackupStatus
+    basicConfig: BasicConfig
+    ftpConfig: FtpConfig
+    directoryConfig: WebDirectoryConfig
 }
 
-export default Backup;
+export default function Backup(props: BackupProps) {
+    const [basicConfig, setBasicConfig] = useState(props.basicConfig)
+    const [ftpConfig, setFtpConfig] = useState(props.ftpConfig)
+    const [directoryConfig, setDirectoryConfig] = useState(props.directoryConfig)
+    const [ftpIp, setFtpIp] = useState(props.ftpConfig.device.ip)
+    const [value, setValue] = useState(props.backupData.backupStarted ? 2 : 0)
+    const [backupService] = useState(BackupService())
+
+    useEffect(() => {
+        setBasicConfig(props.basicConfig)
+        setFtpConfig(props.ftpConfig)
+        setDirectoryConfig(props.directoryConfig)
+    }, [props.basicConfig, props.directoryConfig, props.ftpConfig])
+
+    useEffect(() => {
+        if (props.basicConfig.name !== basicConfig.name) {
+            setValue(props.backupData.backupStarted ? 2 : 0)
+        }
+    }, [basicConfig.name, props.backupData, props.basicConfig.name])
+
+    const updateCurrentIp = (ftpIp: string) => {
+        setFtpIp(ftpIp)
+        setValue(1)
+    }
+
+    const startBackupStep = () => setValue(2)
+    const startBackup = () => backupService.startBackup(props.backupData.selectedConfig, ftpIp)
+    const cancelBackup = () => backupService.cancelBackup(props.backupData.selectedConfig)
+
+    const steps: StepData[] = [
+        {
+            label: 'Test Connection',
+            desc: 'Test the connection to the FTP server on your phone before starting the backup',
+            component: <TestConnection
+                ftpConfig={ftpConfig}
+                updateCurrentIp={updateCurrentIp}
+                nmapRange={basicConfig.nmapRange}
+                useNmap={basicConfig.useNmap}
+            />
+        },
+        {
+            label: 'Start Backup',
+            desc: 'Validate Backup Config and Start the Backup',
+            component: <StartBackup
+                savedDirs={directoryConfig.backupDirs}
+                startBackupStep={startBackupStep}
+            />
+        },
+        {
+            label: 'Backup Progress',
+            desc: 'Backup progress is shown with the list of files copied in the current run',
+            component: <BackupProgress
+                backupName={basicConfig.name}
+                startBackup={startBackup}
+                cancelBackup={cancelBackup}
+                readConfig={props.readConfig}
+            />
+        }
+    ]
+
+    return (
+        <Box className="d-flex" style={{ marginTop: '10vh', marginBottom: '7vh' }}>
+            <Steps steps={steps} value={value} setValue={() => null} />
+        </Box>
+    )
+}

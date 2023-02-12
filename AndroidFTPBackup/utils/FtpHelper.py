@@ -1,66 +1,36 @@
 import ftplib
 import logging
 
-import AndroidFTPBackup.constants.PyStrings as pS
-from AndroidFTP_Backup import handler
-
 
 class FtpHelper:
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
-    def test_wifi_connection(self, ip, port, user, pass_):
-        ftp = ftplib.FTP()
-        result = self.ftp_connect(ftp, ip, port, user, pass_)
-        if result == 0:
-            ftp.close()
-        return result
-
-    @staticmethod
-    def ftp_connect(ftp, ip, port, user, pass_):
+    @classmethod
+    def test_ftp(cls, ftp_data):
         try:
-            ftp.connect(ip, port)
+            ftp = cls.connect_ftp(ftp_data)
         except ConnectionRefusedError:
-            ftp.close()
             return 2
-        try:
-            ftp.login(user, pass_)
         except ftplib.error_perm:
-            ftp.close()
             return 1
+        ftp.close()
         return 0
 
-    def get_dir_list(self, ip, port, username, password):
-        ftp = ftplib.FTP()
-
-        result = self.ftp_connect(ftp, ip, port, username, password)
-        dir_list = []
-
-        if result == 0:
-            for file in ftp.mlsd():
-                if file[1]['type'] == 'dir':
-                    dir_list.append(file[0])
-
-        return dir_list
-
-    def get_dirs(self, ip, port, username, password, path):
-        ftp = ftplib.FTP()
-        result = self.ftp_connect(ftp, ip, port, username, password)
+    @classmethod
+    def load_dir_data(cls, ftp_data):
+        ftp = cls.connect_ftp(ftp_data)
 
         dir_list = []
+        for file in ftp.mlsd(ftp_data['path']):
+            if file[1]['type'] == 'dir':
+                dir_list.append(file[0])
 
-        if result == 0:
-            for file in ftp.mlsd(path):
-                if file[1]['type'] == 'dir':
-                    dir_list.append(file[0])
-
+        ftp.close()
         return dir_list
 
-    @staticmethod
-    def get_ftp_connection():
-        config = handler.configHelper.get_config()
-
+    @classmethod
+    def connect_ftp(cls, ftp_data):
         ftp = ftplib.FTP()
-        ftp.connect(config[pS.FTP][pS.FTP_IP], int(config[pS.FTP][pS.PORT]))
-        ftp.login(user=config[pS.FTP][pS.USERNAME], passwd=config[pS.FTP][pS.PASSWORD])
+        ftp.connect(ftp_data['ip'], int(ftp_data['port']))
+        ftp.login(ftp_data['userId'], ftp_data['password'])
         return ftp

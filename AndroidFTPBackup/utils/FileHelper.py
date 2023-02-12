@@ -3,124 +3,87 @@ import logging
 import os
 import platform
 import threading
-from os import path
 from pathlib import Path
 
-from AndroidFTPBackup.constants import PyStrings as pS
-from AndroidFTP_Backup import handler
+from AndroidFTPBackup.constants import BackupConstants
 
 
 class FileHelper:
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
+    file_data = {}
 
-        self.dirs = {}
-        self.data_list_space = {pS.TYPE: pS.SIZE}
-        self.data_list_count = {pS.TYPE: pS.COUNT}
+    @classmethod
+    def get_data(cls, location):
+        if location in cls.file_data:
+            return cls.file_data[location]
+        cls.async_init(location)
+        return dict(initiated=False)
 
-    def set_sizes(self, folder):
-        self.dirs[folder][pS.TOTAL_SIZE] = sum(self.dirs[folder][pS.SIZES]) \
-            if self.dirs[folder][pS.FILES].__len__() > 0 else 0
-        for cur_folder in self.dirs[folder][pS.FOLDERS]:
-            self.set_sizes(self.folder_join(folder, cur_folder))
-            self.dirs[folder][pS.TOTAL_SIZE] += self.dirs[self.folder_join(folder, cur_folder)][pS.TOTAL_SIZE]
+    @classmethod
+    def init_stats(cls):
+        return dict(dirs={}, initiated=False, stats={**{t: dict(size=0, count=0) for t in BackupConstants.TYPES},
+                                                     'Others': dict(size=0, count=0)})
 
-    @staticmethod
-    def folder_join(folder, cur_folder):
-        return folder + ('/' if folder[-1] != '/' else '') + cur_folder
-
-    # noinspection PyTypeChecker
-    async def initiate_file_system(self):
-        config = handler.configHelper.get_config()
-
-        if pS.BACKUP_FOLDER not in config[pS.PATH]:
-            return
-
-        self.logger.info(pS.SYSTEM_DATA_COLLECTION)
-        data = {pS.OTHERS: {pS.SIZE: 0, pS.COUNT: 0}}
-        for t in pS.types:
-            data[t] = {pS.SIZE: 0, pS.COUNT: 0}
-
-        for a, b, c in os.walk(config[pS.PATH][pS.BACKUP_FOLDER]):
-            replace_a = a.replace('\\', '/')
-            self.dirs[replace_a] = {pS.FOLDERS: [x for x in b if x[0] != '$'], pS.FILES: c}
-
-            sizes = []
-            if c.__len__() != 0:
-                for x in c:
-                    type_ = x.split('.')[-1].lower()
-                    size = os.path.getsize(a + '\\' + x)
-                    sizes.append(size)
-
-                    for t in pS.types:
-                        if type_ in pS.types[t]:
-                            data[t][pS.SIZE] += size
-                            data[t][pS.COUNT] += 1
-                            break
-                    else:
-                        data[pS.OTHERS][pS.SIZE] += size
-                        data[pS.OTHERS][pS.COUNT] += 1
-
-            self.dirs[replace_a][pS.SIZES] = sizes
-            self.dirs[replace_a][pS.NAME] = replace_a.split('/')[-1]
-
-        self.set_sizes(config[pS.PATH][pS.BACKUP_FOLDER])
-
-        for t in data:
-            self.data_list_space[t] = round(data[t][pS.SIZE] / 1024 / 1024 / 1024, 3)
-            self.data_list_count[t] = data[t][pS.COUNT]
-            self.logger.info(pS.FILE_INFO.format(t, self.data_list_count[t],
-                                                 ' '.join(map(str, self.get_readable_size(data[t][pS.SIZE])))))
-
-        return self.data_list_space, self.data_list_count
-
-    @staticmethod
-    def get_readable_size(size):
-        n = 0
-        while size / 1024 > 1:
-            n += 1
-            size /= 1024
-
-        return round(size, 2), pS.sizes[n]
-
-    def open_file(self, open_path):
-        self.logger.info(pS.OPEN_FILE.format(open_path))
-        if platform.system() == pS.WINDOWS:
-            os.startfile(open_path)
-        elif platform.system() == pS.DARWIN:
-            os.subprocess.Popen([pS.OPEN_, open_path])
+    @classmethod
+    def add_stats(cls, file_name, file_size, stats):
+        type_ = file_name.split('.')[-1].lower()
+        for file_type in BackupConstants.TYPES:
+            if type_ in BackupConstants.TYPES[file_type]:
+                stats[file_type]['size'] += file_size
+                stats[file_type]['count'] += 1
+                break
         else:
-            os.subprocess.Popen([pS.XDS_OPEN_, open_path])
+            stats['Others']['size'] += file_size
+            stats['Others']['count'] += 1
 
-    def check_create_backup_folder(self, folder_path):
-        if os.path.exists(folder_path):
+    @classmethod
+    def generate_tree(cls, folder_path, stats):
+        data = dict(files={}, dirs={}, size=0)
+        for file_name in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, file_name)
+            file_size = os.path.getsize(file_path)
+            if os.path.isfile(file_path):
+                data['files'][file_name] = file_size
+                data['size'] += file_size
+                cls.add_stats(file_name, file_size, stats)
+            if os.path.isdir(file_path):
+                tree = cls.generate_tree(file_path, stats)
+                data['dirs'][file_name] = tree
+                data['size'] += tree['size']
+        return data
+
+    @classmethod
+    async def initiate_file_system(cls, location, override):
+        if location in cls.file_data and not override:
             return
-        split_path = folder_path.split('/')
-        if split_path.__len__() == 2:
-            os.mkdir('/'.join(split_path))
-            return
-        self.check_create_backup_folder('/'.join(split_path[:-1]))
-        if split_path[-1] != '':
-            self.logger.info(pS.CREATING_DIR.format(folder_path))
-            os.mkdir('/'.join(split_path))
 
-    def folder_list(self):
-        config = handler.configHelper.get_config()
+        cls.logger.info('Initiating file system data collection: {}'.format(location))
+        cls.file_data[location] = cls.init_stats()
+        cls.file_data[location]['dirs'] = cls.generate_tree(location, cls.file_data[location]['stats'])
+        cls.file_data[location]['initiated'] = True
+        cls.logger.info('Completed file system data collection: {}'.format(location))
 
-        self.logger.info(pS.FETCHING_FOLDER_LIST)
-        return eval(config[pS.PATH][pS.FOLDERS])
+    @classmethod
+    def open_file(cls, open_path):
+        cls.logger.info('Open File: {}'.format(open_path))
+        if platform.system() == "Windows":
+            os.startfile(open_path)
+        elif platform.system() == "Darwin":
+            os.subprocess.Popen(["open_", open_path])
+        else:
+            os.subprocess.Popen(["xdg-open_", open_path])
 
-    @staticmethod
-    def create_folder_if_not_exists(logger, folder):
-        if not path.exists(folder):
-            logger.info(pS.CREATING_FOLDER.format(folder))
-            Path(folder).mkdir(parents=True, exist_ok=True)
+    @classmethod
+    def create_folder(cls, folder_path):
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
 
-    def async_init(self):
+    @classmethod
+    def async_init(cls, location, override=False):
         loop = asyncio.new_event_loop()
-        p = threading.Thread(target=self.worker, args=(loop,))
+        p = threading.Thread(target=cls.worker, args=(loop, location, override))
         p.start()
 
-    def worker(self, loop):
+    @classmethod
+    def worker(cls, loop, location, override):
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.initiate_file_system())
+        loop.run_until_complete(cls.initiate_file_system(location, override))
