@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class AndroidftpbackupConfig(AppConfig):
+class AndroidFTPBackupConfig(AppConfig):
     name = 'AndroidFTPBackup'

@@ -1,17 +1,31 @@
 import * as React from 'react';
 import { NavLink } from 'react-router-dom';
-import IconButton from '@material-ui/core/IconButton';
-import { AppBar, Button, Menu, MenuItem, Toolbar, Typography } from '@material-ui/core';
-import Brightness7Icon from '@material-ui/icons/Brightness7';
-import Brightness3Icon from '@material-ui/icons/Brightness3';
-import Tooltip from '@material-ui/core/Tooltip';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import AddBoxOutlinedIcon from '@material-ui/icons/AddBoxOutlined';
-import EditIcon from '@material-ui/icons/Edit';
-import MenuOpenIcon from '@material-ui/icons/MenuOpen';
-import { Dialog, DialogActions, DialogContent, FormControlLabel, Radio, RadioGroup } from '@material-ui/core';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import Brightness3Icon from '@mui/icons-material/Brightness3';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
+import EditIcon from '@mui/icons-material/Edit';
+import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import { AppBar, Toolbar, Typography, Tooltip, IconButton, Button, Menu, MenuItem, Dialog, DialogContent, RadioGroup, FormControlLabel, Radio, DialogActions, DialogTitle } from '@mui/material';
+import BackupStatus from './model/BackupStatus';
 
-class Header extends React.Component<{ data: any }, any> {
+interface HeaderProps {
+    readConfig: Function
+    switchTheme: Function
+    themeType: string
+    backupData: BackupStatus
+    backup_name: string
+    backups: string[]
+}
+
+interface HeaderState {
+    dialogShow: boolean
+    menuShow: boolean
+    anchorEl: HTMLButtonElement | null
+    backupData: BackupStatus
+}
+
+class Header extends React.Component<HeaderProps, HeaderState> {
 
     constructor(props: any) {
         super(props);
@@ -20,7 +34,7 @@ class Header extends React.Component<{ data: any }, any> {
             dialogShow: false,
             menuShow: false,
             anchorEl: null,
-            backupData: this.props.data.backupData,
+            backupData: this.props.backupData,
         }
 
         this.setAnchorEl = this.setAnchorEl.bind(this)
@@ -34,35 +48,30 @@ class Header extends React.Component<{ data: any }, any> {
 
     public render() {
         return (
-            <>
-                <header>
-                    <AppBar position="fixed">
-                        <Toolbar>
-                            <Typography variant="h6" noWrap className='mr-auto'>
-                                Android FTP Backup
-                            </Typography>
-                            {this.props.data.backup_name ?
-                                this.getRegularHeader()
+            <AppBar position="fixed">
+                <Toolbar>
+                    <Typography variant="h6" noWrap className='mr-auto'>
+                        Android FTP Backup
+                    </Typography>
+                    {this.props.backup_name ?
+                        this.getRegularHeader()
+                        :
+                        <Button to="/config/new" activeClassName="selected" component={NavLink} className='mx-2 text-light'>
+                            New Backup
+                        </Button>
+                    }
+                    <Tooltip title={(this.props.themeType === 'dark' ? "Light" : "Dark") + " Mode"}>
+                        <IconButton className='mx-2' onClick={() => this.props.switchTheme()} edge="end">
+                            {this.props.themeType === 'dark' ?
+                                <Brightness7Icon color='action' className='text-light' />
                                 :
-                                <Typography align="right">
-                                    New Backup
-                                </Typography>
+                                <Brightness3Icon color='action' className='text-light' />
                             }
-                            <Tooltip title={(this.props.data.themeType == 'dark' ? "Light" : "Dark") + " Mode"}>
-                                <IconButton aria-label="delete" onClick={this.props.data.switchTheme} edge="end">
-                                    {
-                                        this.props.data.themeType == 'dark' ?
-                                            <Brightness7Icon color='action' className='text-light' />
-                                            :
-                                            <Brightness3Icon color='action' className='text-light' />
-                                    }
-                                </IconButton>
-                            </Tooltip>
-                        </Toolbar>
-                    </AppBar>
-                    {this.getDialog()}
-                </header>
-            </>
+                        </IconButton>
+                    </Tooltip>
+                </Toolbar>
+                {this.getDialog()}
+            </AppBar>
         )
     }
 
@@ -71,74 +80,69 @@ class Header extends React.Component<{ data: any }, any> {
             <>
                 <Button onClick={this.setAnchorEl}>
                     <Typography className='text-light' variant='button'>
-                        Config [{this.props.data.backup_name}] <ArrowDropDownIcon fontSize='small' />
+                        Config [{this.props.backup_name}]
+                        <ArrowDropDownIcon fontSize='small' />
                     </Typography>
                 </Button>
                 <Menu
-                    anchorEl={this.state.anchorEl}
-                    keepMounted
-                    open={this.state.menuShow}
-                    onClose={this.handleClose}
+                    anchorEl={this.state.anchorEl} keepMounted
+                    open={this.state.menuShow} onClose={this.handleClose}
                 >
                     <MenuItem>
-                        <NavLink to='/config/new' className='text-decoration-none' onClick={this.handleClose}>
-                            <Typography color='textPrimary' variant='button'>
-                                <AddBoxOutlinedIcon className='mr-3' />Add
+                        <NavLink to='/config/new' onClick={this.handleClose} className='text-decoration-none'>
+                            <Typography color='text.primary' variant='button'>
+                                <AddBoxOutlinedIcon className='mr-3' />
+                                Add
                             </Typography>
                         </NavLink>
                     </MenuItem>
                     <MenuItem>
-                        <NavLink to={'/config/edit'} className='text-decoration-none' onClick={this.handleClose}>
-                            <Typography color='textPrimary' variant='button'>
-                                <EditIcon className='mr-3' />Edit
+                        <NavLink to='/config/edit' onClick={this.handleClose} className='text-decoration-none'>
+                            <Typography color='text.primary' variant='button'>
+                                <EditIcon className='mr-3' />
+                                Edit
                             </Typography>
                         </NavLink>
                     </MenuItem>
                     <MenuItem onClick={this.showConfigDialog}>
-                        <Typography color='textPrimary' variant='button'>
-                            <MenuOpenIcon className='mr-3' />Select
+                        <Typography variant='button'>
+                            <MenuOpenIcon className='mr-3' />
+                            Select
                         </Typography>
                     </MenuItem>
                 </Menu>
-                <NavLink to="/backup" activeClassName="MuiButton-outlined" className='MuiButtonBase-root MuiButton-root MuiButton-text text-decoration-none mx-2'>
-                    <Typography variant='button' className='text-light'>
-                        Backup
-                    </Typography>
-                </NavLink>
-                <NavLink to="/dashboard" activeClassName="MuiButton-outlined" className='MuiButtonBase-root MuiButton-root MuiButton-text text-decoration-none mr-2'>
-                    <Typography variant='button' className='text-light'>
-                        Dashboard
-                    </Typography>
-                </NavLink>
+                <Button to="/backup" activeClassName="selected" component={NavLink} className='mx-2 text-light'>
+                    Backup
+                </Button>
+                <Button to="/dashboard" activeClassName="selected" component={NavLink} className='mx-2 text-light'>
+                    Dashboard
+                </Button>
             </>
         )
     }
 
     getDialog() {
         return (
-            <Dialog
-                open={this.state.dialogShow}
-                onClose={this.handleClose}
-            >
-                <Typography color='textPrimary' variant='h5' className='MuiDialogTitle-root p-3 text-center'>
+            <Dialog fullWidth open={this.state.dialogShow} onClose={this.handleClose}>
+                <DialogTitle className='px-4 mx-3 pt-4 mb-2 font-weight-bold' color='primary'>
                     Select Config
-                </Typography>
-                <DialogContent>
+                </DialogTitle>
+                <DialogContent className='px-4 mx-3 pb-2'>
                     <Typography color='textSecondary' className='mb-3'>
                         Choose config from below which you want to activate
                     </Typography>
                     <RadioGroup value={this.state.backupData.selectedConfig} onChange={this.configSelected}>
-                        {this.state.backupData.backups.map((item: any) => (
+                        {this.props.backups.map((item) => (
                             <FormControlLabel value={item} control={<Radio />} key={item} label={item} />
                         ))}
                     </RadioGroup>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={this.handleCloseDialog}>
-                        Close
-                    </Button>
+                <DialogActions className='d-flex align-items-center justify-content-between mx-4 mb-4'>
                     <Button onClick={this.handleConfirm} color="primary" variant='contained' autoFocus>
                         Load Selected
+                    </Button>
+                    <Button onClick={this.handleCloseDialog} color="error" variant='outlined'>
+                        Close
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -162,10 +166,8 @@ class Header extends React.Component<{ data: any }, any> {
     }
 
     handleConfirm() {
-        fetch('/AndroidFTPBackup/api/set_config?name=' + this.state.backupData.selectedConfig)
-            .then(_data => {
-                window.location.reload()
-            })
+        this.props.readConfig(this.state.backupData.selectedConfig)
+        this.handleCloseDialog()
     }
 
     configSelected(event: any) {

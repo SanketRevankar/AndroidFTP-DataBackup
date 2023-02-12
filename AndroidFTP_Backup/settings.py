@@ -23,28 +23,26 @@ SECRET_KEY = 'fjh=8bs8vf596%l^yekr(5sjr1pkfh&cy#ddl&i42__21%aa30'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'daphne',
+    'AndroidFTPBackup',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'AndroidFTPBackup.apps.AndroidftpbackupConfig',
-    'AndroidFTP_Backup.apps.MyAppConfig',
     'channels'
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -102,6 +100,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 ASGI_APPLICATION = "AndroidFTP_Backup.routing.application"
 CHANNEL_LAYERS = {

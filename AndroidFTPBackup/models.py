@@ -1,6 +1,9 @@
 from django.db import models
 
 
-class LastBackup(models.Model):
-    id = models.TextField('Date last updated', primary_key=True)
-    pub_date = models.TextField('Date last updated')
+class Backup(models.Model):
+    name = models.TextField('Backup name', primary_key=True)
+    location = models.TextField('Backup Location')
+    last_backup_start_time = models.TextField('Date last update started')
+    last_backup_end_time = models.TextField('Date last update ended')
+    config = models.TextField('Backup Config')

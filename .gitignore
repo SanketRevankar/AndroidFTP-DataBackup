@@ -1,0 +1,10 @@
+/__pycache__
+/AndroidFTP_Backup/__pycache__
+/venv
+/logs
+*/.vscode
+
+*.pyc
+frontend/backup/.vscode
+db.sqlite3
+.idea

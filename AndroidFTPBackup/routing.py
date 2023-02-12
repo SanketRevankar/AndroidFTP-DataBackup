@@ -1,11 +1,10 @@
 from channels.routing import ProtocolTypeRouter
-from django.conf.urls import url
-from django.urls import path
+from django.urls import re_path
 
 from AndroidFTPBackup import consumer
 
 websocket_urlpatterns = [
-    url('ws/code/output/$', consumer.AndroidFTPBackupConsumer),
+    re_path('ws/code/output/$', consumer.AndroidFTPBackupConsumer.as_asgi()),
 ]
 
 application = ProtocolTypeRouter({
