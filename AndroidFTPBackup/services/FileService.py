@@ -1,6 +1,6 @@
 import json
 
-from AndroidFTPBackup.utils.FileHelper import FileHelper
+from AndroidFTPBackup.helpers.FileHelper import FileHelper
 
 
 class FileService:

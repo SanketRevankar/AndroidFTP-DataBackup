@@ -8,5 +8,14 @@ export default interface BackupMessage {
     backup_name: string
 }
 
-
-export type BackupState = 'Saved' | 'Copying' | 'Error' | 'Started' | 'Completed' | 'Cancelled' | 'EnterDirectory' | 'Scanning'
+export enum BackupState {
+    Saved = 'Saved',
+    Copying = 'Copying',
+    Error = 'Error',
+    Started = 'Started',
+    Completed = 'Completed',
+    Cancelled = 'Cancelled',
+    EnterDirectory = 'Enter Directory',
+    Scanning = 'Scanning',
+    ConnectionFailed = 'Connection Failed',
+}

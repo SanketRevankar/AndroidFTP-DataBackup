@@ -25,6 +25,12 @@ export default function App() {
                 main: 'rgb(144, 183, 249)'
             },
             secondary: lightBlue,
+            error: {
+                main: 'rgb(255, 99, 132)'
+            },
+            success: {
+                main: 'rgb(75, 192, 192)'
+            },
             background: {
                 default: '#252525',
                 paper: '#282828'

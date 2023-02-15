@@ -1,7 +1,8 @@
 import json
 
-from AndroidFTPBackup.utils.BackupHelper import BackupHelper
-from AndroidFTPBackup.utils.ConfigHelper import ConfigHelper
+from AndroidFTPBackup.helpers.ConfigHelper import ConfigHelper
+from AndroidFTPBackup.services.BackupService import BackupService
+from AndroidFTPBackup.utils.BackupUtils import BackupUtils
 
 
 class ConfigService:
@@ -18,7 +19,7 @@ class ConfigService:
         backup = ConfigHelper.load_config(backup_name)
 
         return dict(config=backup['config'], latest_backup=backup['last_backup_end_time'],
-                    backup_started=backup_name in BackupHelper.processes)
+                    backup_started=BackupUtils.is_backup_started(BackupService.processes, backup_name))
 
     @classmethod
     def get_backups(cls):

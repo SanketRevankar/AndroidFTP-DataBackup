@@ -31,6 +31,6 @@ class FtpHelper:
     @classmethod
     def connect_ftp(cls, ftp_data):
         ftp = ftplib.FTP()
-        ftp.connect(ftp_data['ip'], int(ftp_data['port']))
+        ftp.connect(ftp_data['ip'], int(ftp_data['port']), timeout=10000)
         ftp.login(ftp_data['userId'], ftp_data['password'])
         return ftp

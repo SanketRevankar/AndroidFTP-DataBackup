@@ -1,7 +1,7 @@
 import json
 
-from AndroidFTPBackup.utils.FtpHelper import FtpHelper
-from AndroidFTPBackup.utils.WiFiHelper import WiFiHelper
+from AndroidFTPBackup.helpers.FtpHelper import FtpHelper
+from AndroidFTPBackup.helpers.WiFiHelper import WiFiHelper
 
 
 class FtpService:

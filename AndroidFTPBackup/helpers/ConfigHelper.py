@@ -3,7 +3,7 @@ import logging
 
 from asgiref.sync import sync_to_async
 
-from AndroidFTPBackup.utils.FileHelper import FileHelper
+from AndroidFTPBackup.helpers.FileHelper import FileHelper
 
 
 class ConfigHelper:

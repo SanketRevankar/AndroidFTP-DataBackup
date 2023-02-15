@@ -5,3 +5,5 @@ TYPES = {
     'Document': ['xlsx', 'pdf', 'doc', 'docx', 'pptx', 'txt'],
 }
 TIME_FORMAT = '%Y%m%d%H%M%S.000'
+MAX_RETRY_COUNT = 999
+RETRY_DELAY = 15

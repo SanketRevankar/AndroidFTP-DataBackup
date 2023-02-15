@@ -3,7 +3,6 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CancelIcon from '@mui/icons-material/Cancel'
 import LoopRoundedIcon from '@mui/icons-material/LoopRounded'
 import { Box, Button, Divider, Typography } from '@mui/material'
-import { red } from '@mui/material/colors'
 import BackupMessage, { BackupState } from 'src/model/BackupMessage'
 import FolderIcon from '@mui/icons-material/Folder';
 import { getReadableSize } from 'src/utils/FileHelper'
@@ -17,7 +16,7 @@ interface BackupProgressProps {
 
 interface BackupProgressState {
     _isMounted: boolean
-    backupState: BackupState
+    backupState: `${BackupState}`
     scanFolderName: string
     backupData: Map<string, BackupMessage>
 }
@@ -32,7 +31,7 @@ class BackupProgress extends React.Component<BackupProgressProps, BackupProgress
 
         this.state = {
             _isMounted: false,
-            backupState: 'Started',
+            backupState: BackupState.Started,
             scanFolderName: '',
             backupData: new Map()
         }
@@ -71,14 +70,17 @@ class BackupProgress extends React.Component<BackupProgressProps, BackupProgress
                     Backup Progress
                 </Typography>
                 <Divider className='my-3' />
-                <Box style={{ maxHeight: '67vh', overflow: 'overlay', width: '75vw' }} id='backupDataDiv'>
+                <Box style={{ maxHeight: '67vh', height: '67vh', overflow: 'overlay', width: '75vw' }} id='backupDataDiv'>
                     {this.getBackupData()}
                     <div ref={this.messagesEndRef} />
-                    {this.state.backupState === 'Scanning' &&
+                    {(this.state.backupState === BackupState.Scanning || this.state.backupState === BackupState.ConnectionFailed) &&
                         <div className='d-flex align-items-center ml-2 my-3'>
-                            {this.getIcon('Scanning')}
-                            <Typography className='ml-2' color='info.main'>
-                                Scanning Folder {this.state.scanFolderName}
+                            {this.getIcon(this.state.backupState)}
+                            <Typography className='ml-2' variant='h6' color={this.getColorClass(this.state.backupState)}>
+                                {this.state.backupState === 'Scanning' ?
+                                    `Scanning Folder ${this.state.scanFolderName}`
+                                    :
+                                    `Connnection Issue, please check if FTP server is active... ${this.state.scanFolderName}`}
                             </Typography>
                         </div>
                     }
@@ -86,9 +88,7 @@ class BackupProgress extends React.Component<BackupProgressProps, BackupProgress
                 {this.isEndState(this.state.backupState) ? null :
                     <Button
                         onClick={this.props.cancelBackup}
-                        variant='contained'
-                        className='mt-3'
-                        style={{ backgroundColor: red[600] }}
+                        variant='contained' className='mt-3' color='error'
                     >
                         Cancel
                     </Button>
@@ -101,47 +101,52 @@ class BackupProgress extends React.Component<BackupProgressProps, BackupProgress
         this.messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
 
-    getIcon(state: BackupState) {
-        return {
-            'Started': null,
-            'Scanning': <LoopRoundedIcon fontSize='small' className='App-logo' color='info' />,
-            'EnterDirectory': <FolderIcon fontSize='small' color='primary' />,
-            'Copying': <LoopRoundedIcon fontSize='small' className='App-logo' color='primary' />,
-            'Saved': <CheckCircleOutlineIcon fontSize='small' color='success' />,
-            'Completed': <CheckCircleOutlineIcon color='success' />,
-            'Error': <CancelIcon fontSize='small' color='error' />,
-            'Cancelled': <CancelIcon color='error' />,
-        }[state]
+    getIcon(state: `${BackupState}`) {
+        switch (state) {
+            case BackupState.Scanning: return <LoopRoundedIcon fontSize='small' className='App-logo' color='info' />
+            case BackupState.Copying: return <LoopRoundedIcon fontSize='small' className='App-logo' color='primary' />
+            case BackupState.EnterDirectory: return <FolderIcon fontSize='small' color='primary' />
+            case BackupState.Saved: return <CheckCircleOutlineIcon fontSize='small' color='success' />
+            case BackupState.Error:
+            case BackupState.ConnectionFailed: return <CancelIcon fontSize='small' color='error' />
+            case BackupState.Completed: return <CheckCircleOutlineIcon color='success' />
+            case BackupState.Cancelled: return <CancelIcon color='error' />
+            default: return null
+        }
     }
 
     displayMessage(backupMessage: BackupMessage) {
-        return {
-            'Started': () => null,
-            'Scanning': () => null,
-            'EnterDirectory': this.backupEnterLog,
-            'Copying': this.backupLog,
-            'Saved': this.backupLog,
-            'Completed': this.endStatement,
-            'Error': this.backupLog,
-            'Cancelled': this.endStatement,
-        }[backupMessage.state](backupMessage)
+        switch (backupMessage.state) {
+            case BackupState.Copying:
+            case BackupState.Saved:
+            case BackupState.Error: return this.backupLog(backupMessage)
+            case BackupState.Completed:
+            case BackupState.Cancelled: return this.endStatement(backupMessage)
+            case BackupState.EnterDirectory: return this.backupEnterLog(backupMessage)
+            case BackupState.Scanning:
+            case BackupState.Started:
+            case BackupState.ConnectionFailed:
+            default: return null
+        }
     }
 
-    getColorClass(state: BackupState) {
-        return {
-            'Scanning': 'primary',
-            'Started': 'primary',
-            'EnterDirectory': 'primary',
-            'Copying': 'primary',
-            'Saved': 'success.main',
-            'Completed': 'success.main',
-            'Error': 'error',
-            'Cancelled': 'error',
-        }[state]
+    getColorClass(state: `${BackupState}`) {
+        switch (state) {
+            case BackupState.Saved:
+            case BackupState.Completed: return 'success.main'
+            case BackupState.Error:
+            case BackupState.ConnectionFailed:
+            case BackupState.Cancelled: return 'error'
+            case BackupState.Scanning:
+            case BackupState.Started:
+            case BackupState.Copying:
+            case BackupState.EnterDirectory:
+            default: return 'primary'
+        }
     }
 
-    isEndState(state: string) {
-        return ['Completed', 'Cancelled'].includes(state)
+    isEndState(state: `${BackupState}`) {
+        return BackupState.Completed === state || BackupState.Cancelled === state
     }
 
     endStatement(backupMessage: BackupMessage) {
@@ -209,7 +214,10 @@ class BackupProgress extends React.Component<BackupProgressProps, BackupProgress
 
     handleData(backupMessage: BackupMessage) {
         if (this.props.backupName === backupMessage.backup_name) {
-            if (backupMessage.state === 'Scanning') {
+            if (backupMessage.state === BackupState.Scanning || backupMessage.state === BackupState.ConnectionFailed) {
+                if (backupMessage.value === 'Retry Limit reached, Cancelling Backup.') {
+                    alert(backupMessage.value)
+                }
                 this.setState({
                     backupState: backupMessage.state,
                     scanFolderName: backupMessage.value
@@ -223,7 +231,7 @@ class BackupProgress extends React.Component<BackupProgressProps, BackupProgress
                 }))
             }
 
-            if (backupMessage.state === 'Completed') {
+            if (backupMessage.state === BackupState.Completed) {
                 this.props.readConfig(backupMessage.backup_name)
             }
         }

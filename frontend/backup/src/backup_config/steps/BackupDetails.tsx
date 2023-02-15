@@ -15,7 +15,7 @@ interface BackupDetailsProps {
 }
 
 export default function BackupDetails(props: BackupDetailsProps) {
-    const folderLocationRegex = '^[a-zA-Z]:\\/\\w(\\w*\\/)*\\w*$'
+    const folderLocationRegex = '^[a-zA-Z]:((\\/)|(\\\\))\\w(\\w*((\\/)|(\\\\)))*\\w*$'
     const nmapRangeRegex = '^([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?$'
     const [backupName, setBackupName] = React.useState(props.basicConfig.name)
     const [backupLocation, setBackupLocation] = React.useState(props.basicConfig.location)
