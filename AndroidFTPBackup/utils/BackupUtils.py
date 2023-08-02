@@ -27,11 +27,6 @@ class BackupUtils:
         await channel.group_send('output', message)
 
     @classmethod
-    def write_ftp_file(cls, file_name, file_bytes):
-        with open(file_name, "wb") as file:
-            file.write(file_bytes)
-
-    @classmethod
     def is_backup_started(cls, processes, backup_name):
         return backup_name in processes and processes[backup_name].state == 'Started'
 
@@ -45,11 +40,11 @@ class BackupUtils:
         else:
             file_path = os.path.join(backup_location, file.name)
 
-        if os.path.exists(file_path):
-            if file.modify >= last_backup_end_time:
-                file_path = BackupUtils.get_suffixed_file_path(file_path)
-            else:
-                save = False
+        # if os.path.exists(file_path):
+        #     if file.modify >= last_backup_end_time:
+        #         file_path = BackupUtils.get_suffixed_file_path(file_path)
+        #     else:
+        #         save = False
 
         return file_path, save
 

@@ -108,7 +108,8 @@ class BackupHelper:
 
     async def create_file(self, file_name, current_file_name, time, file_path):
         current_file = os.path.join(file_path, current_file_name)
-        await self.get_file(current_file, lambda b: BackupUtils.write_ftp_file(file_name, b))
+        with open(file_name, "wb") as file:
+            await self.get_file(current_file, file.write)
         win_file = CreateFile(file_name, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                               None, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, None)
         # noinspection PyUnresolvedReferences
