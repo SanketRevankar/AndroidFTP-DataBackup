@@ -4,6 +4,6 @@ TYPES = {
     'Audio': ['aac', 'ogg', 'mp3', 'wav', 'amr', 'opus', 'm4a'],
     'Document': ['xlsx', 'pdf', 'doc', 'docx', 'pptx', 'txt'],
 }
-TIME_FORMAT = '%Y%m%d%H%M%S.000'
+TIME_FORMAT = '%Y%m%d%H%M%S.%f'
 MAX_RETRY_COUNT = 999
 RETRY_DELAY = 15
