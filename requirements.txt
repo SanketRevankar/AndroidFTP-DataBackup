@@ -1,6 +1,6 @@
 channels==4.0.0
 daphne==4.0.0
-pyOpenSSL==23.2.0
+pyOpenSSL==26.0.0
 python-nmap==0.7.1
 pywin32==306
 service-identity==23.1.0
